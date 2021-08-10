@@ -150,7 +150,7 @@ def img2ldl(im,thresh=3,debug=False):
             area,loop=largest
             c=group_color[i]/group_pixeln[i]
             loops.append((area,loop,npa2tuple_color(c)))
-        elif(False and group_pixeln[i]<=4):       #dot
+        elif(group_pixeln[i]<=10):       #dot
             c=group_color[i]/group_pixeln[i]
             dots.append((i,npa2tuple_color(c),group_pixeln[i]**0.5))
         else:                           #lines
@@ -163,9 +163,16 @@ def img2ldl(im,thresh=3,debug=False):
                     longest=pth'''
                 if(len(pth)>1):
                     lines.append((pth,c))
+                else:
+                    dots.append((pth[0],c,1))
             '''if(longest is not None):
                 c=group_color[i]/group_pixeln[i]
                 lines.append((longest,npa2tuple_color(c)))'''
+    for g in group_color:
+        if(g in group_graphs):
+            continue
+        c=group_color[g]/group_pixeln[g]
+        dots.append((g,npa2tuple_color(c),1))
     if(debug):
         enmiao=Image.new(im.mode,im.size)
         az=dict()
@@ -197,9 +204,42 @@ def smooth_points(points,step=2.4,start=0,end=None):
         start+=step
     return ret
 def ldl2svg(loops,dots,lines,smooth=2.4):
-    pass
+    out=""
+    def prt(*args,end='\n'):
+        nonlocal out
+        out+=" ".join([str(i) for i in args])
+        out+=end
+    prt('<?xml version="1.0" standalone="no"?>')
+    prt('<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 20010904//EN"')
+    prt('"http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">')
+    prt('<svg xmlns="http://www.w3.org/2000/svg" version="1.1">')
+    for loop in loops:
+        area,points,c=loop
+        points=smooth_points(points,smooth)
+        prt('<path d="',end='')
+        f="M"
+        for x,y in points:
+            prt(f,end='')
+            prt("%.2f"%x,"%.2f"%y,end=' ')
+            f="L"
+        prt('Z" fill="RGB%s" />'%(c,))
+    for i in dots:
+        xy,c,rad=i
+        prt('<circle cx="%.1f" cy="%.1f" r="%.2f" fill="RGB%s"/>'%(*xy,rad*4/3.14,c))
+    for line in lines:
+        points,c=line
+        points=smooth_points(points,smooth)
+        prt('<path d="',end='')
+        f="M"
+        for x,y in points:
+            prt(f,end='')
+            prt("%.2f"%x,"%.2f"%y,end=' ')
+            f="L"
+        prt('Z" stroke="RGB%s" fill="none" stroke-width="4" />'%(c,))
+    prt("</svg>",end='')
+    return out
 if(__name__=='__main__'):
-    for ss in (1e5,1e6):
+    for ss in (4e5,):
         im=Image.open(r"C:\Users\xiaofan\AppData\Roaming\Typora\themes\autumnus-assets\5XEclgMCLtPhfSb.jpg")
         w,h=im.size
         rate=(ss/w/h)**0.5
@@ -210,6 +250,9 @@ if(__name__=='__main__'):
         import time
         tm=time.time()
         loops,dots,lines=img2ldl(im1,debug=False)
+        s=ldl2svg(loops,dots,lines)
+        with open(r"C:\Users\xiaofan\Downloads\img2svg\tmp.svg","w") as f:
+            f.write(s)
         tm=time.time()-tm
         print("%.2f secs,%d pixs per sec"%(tm,ss/tm))
         print(len(loops),'loops')
@@ -218,17 +261,16 @@ if(__name__=='__main__'):
         #im1.show()
         im2=Image.new("RGB",im1.size)
         dr=ImageDraw.Draw(im2)
-        for xy,c,siz in dots:
-            x,y=xy
-            siz=siz*2
-            az=x-siz,x+siz,y-siz,y+siz
-            x1,x2,y1,y2=[int(i) for i in az]
-            dr.ellipse((x1,y1,x2,y2),fill=c)
-        
         for loop in loops:
             area,points,c=loop
             points=smooth_points(points)
             dr.polygon(points,fill=c)
+        for xy,c,siz in dots:
+            x,y=xy
+            siz=siz
+            az=x-siz,x+siz,y-siz,y+siz
+            x1,x2,y1,y2=[int(i) for i in az]
+            dr.ellipse((x1,y1,x2,y2),fill=c)
         for line in lines:
             points,c=line
             points=smooth_points(points)

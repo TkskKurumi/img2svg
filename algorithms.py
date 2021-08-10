@@ -1,13 +1,15 @@
 class disjointset:
-	def __init__(self):
-		self.d=dict()
-	def find(self,u):
-		if(self.d.get(u,u)==u):
-			return u
-		self.d[u]=self.find(self.d[u])
-		return self.d[u]
-	def join(self,u,v):
-		self.d[self.find(u)]=self.find(v)
+    def __init__(self):
+        self.d=dict()
+        import sys
+        sys.setrecursionlimit(1000000)
+    def find(self,u):
+        if(self.d.get(u,u)==u):
+            return u
+        self.d[u]=self.find(self.d[u])
+        return self.d[u]
+    def join(self,u,v):
+        self.d[self.find(u)]=self.find(v)
 DJS=disjointset
 def normalize_edge(u,v):
     return tuple(sorted([u,v]))
@@ -15,6 +17,17 @@ class graph:    #undirected unweighted graph
     def __init__(self,neibours=None,edges=None):
         self.neibours=neibours or dict()
         self.edges=edges or set()
+    def seperate_by_connectivity(self):
+        ret=dict()
+        djs=DJS()
+        for u,v in self.edges:
+            djs.join(u,v)
+        for u,v in self.edges:
+            fu=djs.find(u)
+            if(fu not in ret):
+                ret[fu]=graph()
+            ret[fu].add_edge(u,v)       #one graph for each connected subgraph
+        return [j for i,j in ret.items()]
     def add_edge(self,u,v):
         self.neibours[u]=self.neibours.get(u,set())
         self.neibours[u].add(v)
@@ -22,39 +35,64 @@ class graph:    #undirected unweighted graph
         self.neibours[v].add(u)
         edg=normalize_edge(u,v)
         self.edges.add(edg)
-    def span_tree(self):   #span tree without rules
+    def farthest_path(self,s=None):
+        if(s is None):
+            s=list(self.neibours)[0]
+            pth=self.farthest_path(s)
+            s=pth[-1]
+            return self.farthest_path(s)
+        else:
+            bfsu=[s]
+            vis={s}
+            fa=dict()
+            bfsi=0
+            while(bfsi<len(bfsu)):
+                u=bfsu[bfsi]
+                for v in self.neibours[u]:
+                    if(v in vis):
+                        continue
+                    vis.add(v)
+                    bfsu.append(v)
+                    fa[v]=u
+                bfsi+=1
+            t=bfsu[-1]
+            ret=[]
+            while(t!=s):
+                ret.append(t)
+                t=fa[t]
+            ret.append(s)
+            return ret[::-1]
+    def span_tree(self,root=None):   #span tree on connected graph without rules
         djs=disjointset()
         ret=graph()
         fa=dict()
-        root=None
-        for u,neib in self.neibours.items():
-            if(root is None):
-                root=u
-            for v in neib:
-                if(djs.find(u)==djs.find(v)):
+        depth=dict()
+        if(root is None):
+            root=list(self.neibours)[0]
+        vis=set()
+        vis.add(root)
+        bfsu=[root]
+        depth[root]=0
+        i=0
+        while(i<len(bfsu)):
+            u=bfsu[i]
+            for v in self.neibours[u]:
+                if(v in vis):
                     continue
-                djs.join(u,v)
                 ret.add_edge(u,v)
-        #vis=dict()
-        #vis[root]=True
-        def dfs(u):
-            nonlocal ret,fa
-            for v in ret.neibours[u]:
-                if(v==fa.get(u,None)):
-                    continue
-                
-                
+                vis.add(v)
                 fa[v]=u
-                dfs(v)
-        dfs(root)
-        return tree(root,ret.neibours,fa,ret.edges)
+                depth[v]=depth[u]+1
+                bfsu.append(v)
+            i+=1
+        return tree(root,ret.neibours,fa,ret.edges,depth)
 class tree:
-    def __init__(self,root=None,neibours=None,fa=None,edges=None):
+    def __init__(self,root=None,neibours=None,fa=None,edges=None,depth=None):
         self.neibours=neibours or dict()
         self.fa=fa or dict()
         self.edges=edges
         self.root=root
-        self.depths=dict()
+        self.depths=depth or dict()
         self.lca_initiated=False
     def init_lca(self):
         self.anc=dict()
@@ -105,6 +143,7 @@ class tree:
         if(self.fa.get(u,u)==self.fa.get(v,v)):
             return self.fa[u]
         raise Exception("Node not in same tree")
+
 if(__name__=='__main__'):
     g=graph()
     for i in range(0,10):
