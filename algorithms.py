@@ -1,3 +1,5 @@
+import random
+import numpy as np
 class disjointset:
     def __init__(self):
         self.d=dict()
@@ -143,16 +145,53 @@ class tree:
         if(self.fa.get(u,u)==self.fa.get(v,v)):
             return self.fa[u]
         raise Exception("Node not in same tree")
-
+def kmeans_with_weights(k,points,weights,n_iter=10):
+	typ=np.float32
+	def asarr(i):
+		if(isinstance(i,np.ndarray)):
+			return i
+		else:
+			return np.array(i,typ)
+	def dist(a,b):
+		return np.linalg.norm(a-b)
+	points=[asarr(i) for i in points]
+	n=len(points)
+	p_shape=points[0].shape
+	ret=random.sample(points,k)
+	for i_iter in range(n_iter):
+		sum_point=[np.zeros(p_shape,typ) for _ in range(n)]
+		sum_weight=[0 for _ in range(n)]
+		for idx,p in enumerate(points):
+			best_jdx=0
+			best_dist=dist(p,ret[0])
+			for jdx in range(1,k):
+				_dist=dist(p,ret[jdx])
+				if(_dist<best_dist):
+					best_dist=_dist
+					best_jdx=jdx
+			sum_point[best_jdx]+=p*weights[idx]
+			sum_weight[best_jdx]+=weights[idx]
+		for i in range(k):
+			if(sum_weight[i]):
+				ret[i]=sum_point[i]/sum_weight[i]
+	return ret
+class wh_iter:
+	def __init__(self,w,h):
+		self.w=w
+		self.h=h
+		self.x=0
+		self.y=0
+	def __next__(self):
+		self.y+=self.x//self.w
+		self.x=self.x%self.w
+		if(self.y==self.h):
+			raise StopIteration
+		else:
+			ret=(self.x,self.y)
+			self.x+=1
+			return ret
+	def __iter__(self):
+		return self
 if(__name__=='__main__'):
-    g=graph()
-    for i in range(0,10):
-        for j in range(i+1,10):
-            g.add_edge(i,j)
-    
-    t=g.span_tree()
-    print(t.fa)
-    print(t.root)
-    for i in range(10):
-        for j in range(i+1,10):
-            print('dist(%d,%d)=%d'%(i,j,t.dist(i,j)))
+	for x,y in wh_iter(10,10):
+		print(x,y)

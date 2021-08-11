@@ -17,7 +17,7 @@ dxy3=[(1,0),(0,1),(1,1)]
 print(dxy4,dxy8)
 def npa2tuple_color(arr):
 	return tuple([int(i) for i in arr])
-def img2ldl(im,thresh=18,force_group=False,debug=False):
+def img2ldl(im,thresh=8,force_group=True,debug=False):
 	color_groups=disjointset()
 	
 	w,h=im.size
@@ -172,7 +172,7 @@ def img2ldl(im,thresh=18,force_group=False,debug=False):
 			area,loop=largest
 			c=group_color[i]/group_pixeln[i]
 			loops.append((area,loop,npa2tuple_color(c)))
-		elif(group_pixeln[i]<=10):	   #dot
+		elif(False and group_pixeln[i]<=10):	   #dot
 			c=group_color[i]/group_pixeln[i]
 			dots.append((i,npa2tuple_color(c),group_pixeln[i]**0.5))
 		else:						   #lines
@@ -186,7 +186,10 @@ def img2ldl(im,thresh=18,force_group=False,debug=False):
 				if(len(pth)>1):
 					lines.append((pth,c))
 				else:
-					dots.append((pth[0],c,1))
+					#dots.append((pth[0],c,1))
+					x,y=pth[0]
+					loops.append((1,[(x,y),(x+1,y),(x+1,y+1),(x,y+1)],c))
+					
 			'''if(longest is not None):
 				c=group_color[i]/group_pixeln[i]
 				lines.append((longest,npa2tuple_color(c)))'''
@@ -226,7 +229,7 @@ def smooth_points(points,step=2.4,start=0,end=None):
 	if(len(ret)<10):
 		return points
 	return ret
-def ldl2svg(loops,dots,lines,smooth=1.7,blur_dots=1.2,scale=3,cutdown_dots=10000,line_alpha=0.5):
+def ldl2svg(loops,dots,lines,smooth=1.7,blur_dots=1.2,scale=3,cutdown_dots=10000,line_alpha=0.5,loop_stroke=False):
 	out=""
 	def prt(*args,end='\n'):
 		nonlocal out
@@ -249,8 +252,10 @@ def ldl2svg(loops,dots,lines,smooth=1.7,blur_dots=1.2,scale=3,cutdown_dots=10000
 			prt(f,end='')
 			prt("%.2f"%(x*scale),"%.2f"%(y*scale),end=' ')
 			f="L"
-		
-		prt('Z" fill="RGB%s" stroke="RGB(%d,%d,%d,70%%)" stroke-width="%.1f" />'%(c,*c[:3],4*scale))
+		if(loop_stroke):
+			prt('Z" fill="RGB%s" stroke="RGB(%d,%d,%d,70%%)" stroke-width="%.1f" />'%(c,*c[:3],2*scale))
+		else:
+			prt('Z" fill="RGB%s" stroke="none" />'%(c,))
 	for i in dots:
 		xy,c,rad=i
 		x,y=xy
@@ -281,19 +286,22 @@ def ldl2svg(loops,dots,lines,smooth=1.7,blur_dots=1.2,scale=3,cutdown_dots=10000
 	return out
 if(__name__=='__main__'):
 	secs=30
-	for ss in (7000*secs,):
-		im=Image.open(r"M:\pic\sese1.png")
+	speed=13000
+	for ss in (speed*secs,):
+		im=Image.open(r"C:\Users\xiaofan\AppData\Roaming\Typora\themes\autumnus-assets\WPxSwEYVtfm6Ba1.png")
 		w,h=im.size
 		rate=(ss/w/h)**0.5
-		rate=1
+		
 		w=int(w*rate)
 		h=int(h*rate)
 		im1=im.resize((w,h))
 		import time
 		tm=time.time()
+		
 		loops,dots,lines=img2ldl(im1,debug=False)
-		s=ldl2svg(loops,dots,lines,scale=min(1600/w,900/h))
-		with open(r"C:\img2svg\tmp.svg","w") as f:
+		s=ldl2svg(loops,dots,lines,scale=min(1200/w,700/h))
+		from os import path
+		with open(path.join(path.dirname(__file__),'sample.svg'),"w") as f:
 			f.write(s)
 		tm=time.time()-tm
 		print("%.2f secs,%d pixs per sec"%(tm,w*h/tm))
@@ -319,3 +327,4 @@ if(__name__=='__main__'):
 			points=smooth_points(points)
 			dr.line(points,fill=c,width=4)
 		im2.show()
+	print(ldl2svg([(1,((0,0),(1,0),(1,1),(0,1)),(255,100,120))],[],[]))
