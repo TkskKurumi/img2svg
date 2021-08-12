@@ -24,7 +24,7 @@ def smooth_points(points,step=2.4,start=0,end=None):
 	if(len(ret)<10):
 		return points
 	return ret
-def ldl2svg(loops,dots,lines,smooth=1.7,blur_dots=1.2,scale=3,cutdown_dots=10000,line_alpha=0.5,loop_stroke=True,loop_stroke_width=1):
+def ldl2svg(loops,dots,lines,smooth=1.7,blur_dots=1.2,scale=3,cutdown_dots=10000,line_alpha=0.5,loop_stroke=True,loop_stroke_width=1.2):
 	out=""
 	def prt(*args,end='\n'):
 		nonlocal out
@@ -86,7 +86,7 @@ dxy8=[(dx8[i],dy8[i]) for i in range(8)]
 dx4=[0,0,1,-1]
 dy4=[1,-1,0,0]
 dxy4=[(dx4[i],dy4[i]) for i in range(4)]
-def img2loops1(img,ss=5e5,n_colors=192,sample_color=None,n_points=int(2e4),merge_samecolor_tri=False,debug=True,merge_thresh=6,point_cut_method='sort'):
+def img2loops1(img,ss=1e5,n_colors=512,sample_color=None,n_points=None,merge_samecolor_tri=False,debug=True,merge_thresh=6,point_cut_method='sort',ensure_corner=True):
 	w,h=img.size
 	rate=(ss/w/h)**0.5
 	sample_w,sample_h=int(w*rate),int(h*rate)
@@ -102,6 +102,9 @@ def img2loops1(img,ss=5e5,n_colors=192,sample_color=None,n_points=int(2e4),merge
 		y=random.randrange(h)
 		c=img.getpixel((x,y))
 		colors.add(c)
+	if(n_points is None):
+		n_points=int(ss/12)
+		
 	colors=list(colors)
 	colors=kmeans_with_weights(n_colors,colors,[1 for i in colors],n_iter=3)
 	colors=[npa2tuple_color(i) for i in colors]
@@ -133,7 +136,7 @@ def img2loops1(img,ss=5e5,n_colors=192,sample_color=None,n_points=int(2e4),merge
 		t=time.time()-start_time
 		start_time=time.time()
 		print('color cutdown use %.1f seconds'%t)
-		simg.show()
+		#simg.show()
 	points=[]
 	p_diff=[]
 	for xy in wh_iter(sample_w-1,sample_h-1):
@@ -162,14 +165,20 @@ def img2loops1(img,ss=5e5,n_colors=192,sample_color=None,n_points=int(2e4),merge
 			for idx,p in enumerate(points):
 				import heapq
 				heapq.heappush(az,(p_diff[idx],random.random(),p))
-				if(len(az)>n_points):
+				if(len(az)>int(n_points*0.9)):
 					heapq.heappop(az)
-			points=[_[-1] for _ in az]
+			
+			points=[_[-1] for _ in az]+random.sample(points,n_points-len(az))
+			points=list(set(points))
 		if(debug):
 			import time
 			t=time.time()-start_time
 			start_time=time.time()
-			print('color cutdown use %.1f seconds'%t)
+			print('point cutdown use %.1f seconds'%t)
+	if(ensure_corner):
+		for x in [0,sample_w-2]:
+			for y in [0,sample_h-2]:
+				points.append(point(x,y))
 	M=mesh.delaunay(points)
 	if(debug):
 		import time
@@ -297,13 +306,16 @@ def img2loops(img,n_points=int(3e4),sample_points=None,sample_ss=1e6,ensure_corn
 		loops.append((1,[A.xy,B.xy,C.xy],color))
 	return loops
 if(__name__=='__main__'):
-	im=Image.open(r"C:\Users\xiaofan\AppData\Roaming\Typora\themes\autumnus-assets\5XEclgMCLtPhfSb.jpg").convert("RGB")
+	im=Image.open(r"C:\Users\xiaofan\AppData\Roaming\Typora\themes\autumnus-assets\3qUeXmrLdczVxhf.jpg").convert("RGB")
 	import time
 	tm=time.time()
 	loops=img2loops1(im)
 	tm=time.time()-tm
 	print("%.1f seconds"%tm)
-	s=ldl2svg(loops,[],[],scale=0.3)
+	ww=1280
+	hh=720
+	w,h=im.size
+	s=ldl2svg(loops,[],[],scale=min(ww/w,hh/h))
 	from os import path
 	with open(path.join(path.dirname(__file__),'sample.svg'),"w") as f:
 		f.write(s)
