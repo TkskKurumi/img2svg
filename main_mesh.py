@@ -86,14 +86,14 @@ dxy8=[(dx8[i],dy8[i]) for i in range(8)]
 dx4=[0,0,1,-1]
 dy4=[1,-1,0,0]
 dxy4=[(dx4[i],dy4[i]) for i in range(4)]
-def img2loops1(img,ss=5e5,n_colors=256,sample_color=None,n_points=int(1e4),merge_samecolor_tri=False,debug=True,merge_thresh=6):
+def img2loops1(img,ss=5e5,n_colors=192,sample_color=None,n_points=int(2e4),merge_samecolor_tri=False,debug=True,merge_thresh=6,point_cut_method='sort'):
 	w,h=img.size
 	rate=(ss/w/h)**0.5
 	sample_w,sample_h=int(w*rate),int(h*rate)
 	simg=img.resize((sample_w,sample_h),Image.LANCZOS)
 	if(sample_color is None):
 		sample_color=int((n_colors*ss)**0.5)
-	colors=[]
+	colors=set()
 	if(debug):
 		import time
 		start_time=time.time()
@@ -101,7 +101,8 @@ def img2loops1(img,ss=5e5,n_colors=256,sample_color=None,n_points=int(1e4),merge
 		x=random.randrange(w)
 		y=random.randrange(h)
 		c=img.getpixel((x,y))
-		colors.append(c)
+		colors.add(c)
+	colors=list(colors)
 	colors=kmeans_with_weights(n_colors,colors,[1 for i in colors],n_iter=3)
 	colors=[npa2tuple_color(i) for i in colors]
 	def nearest(colors,c):
@@ -134,6 +135,7 @@ def img2loops1(img,ss=5e5,n_colors=256,sample_color=None,n_points=int(1e4),merge
 		print('color cutdown use %.1f seconds'%t)
 		simg.show()
 	points=[]
+	p_diff=[]
 	for xy in wh_iter(sample_w-1,sample_h-1):
 		x,y=xy
 		c=simg.getpixel(xy)
@@ -141,6 +143,8 @@ def img2loops1(img,ss=5e5,n_colors=256,sample_color=None,n_points=int(1e4),merge
 		c2=simg.getpixel((x,y+1))
 		if(c!=c1 or c!=c2):
 			points.append(point(*xy))
+			if(point_cut_method=='sort'):
+				p_diff.append(colordis(c,c1)+colordis(c,c2))
 	if(debug):
 		import time
 		t=time.time()-start_time
@@ -150,9 +154,22 @@ def img2loops1(img,ss=5e5,n_colors=256,sample_color=None,n_points=int(1e4),merge
 		n_points=int(len(points)**0.5)
 	if(n_points<len(points)):
 		if(debug):
-			print('%d points cutdown to %d points',len(points),n_points)
-		points=random.sample(points,n_points)
-	
+			print('%d points cutdown to %d points'%(len(points),n_points))
+		if(point_cut_method=='random'):
+			points=random.sample(points,n_points)
+		elif(point_cut_method=='sort'):
+			az=[]
+			for idx,p in enumerate(points):
+				import heapq
+				heapq.heappush(az,(p_diff[idx],random.random(),p))
+				if(len(az)>n_points):
+					heapq.heappop(az)
+			points=[_[-1] for _ in az]
+		if(debug):
+			import time
+			t=time.time()-start_time
+			start_time=time.time()
+			print('color cutdown use %.1f seconds'%t)
 	M=mesh.delaunay(points)
 	if(debug):
 		import time
@@ -179,15 +196,25 @@ def img2loops1(img,ss=5e5,n_colors=256,sample_color=None,n_points=int(1e4),merge
 				color+=np.array(get(x*w/sample_w,y*h/sample_h),np.float32)
 			color=npa2tuple_color(color/len(_pts))
 			tri_color[abc]=color
+		tri_edge=dict()
 		for uv in M.edges:
 			u,v=uv
+			for w in M.edge2mesh[uv]:
+				tri=_sorted([u,v,w])
+				tri_edge[tri]=tri_edge.get(tri,set())
+				tri_edge[tri].add(uv)
+				tri_edge[tri].add(_sorted([u,w]))
+				tri_edge[tri].add(_sorted([w,v]))
+				
 			if(len(M.edge2mesh[uv])==2):
 				p,q=M.edge2mesh[uv]
-				tri_p=_sorted(u,v,p)
-				tri_q=_sorted(u,v,q)
+				tri_p=_sorted([u,v,p])
+				tri_q=_sorted([u,v,q])
 				if(colordis(tri_color[tri_p],tri_color[tri_q])<merge_thresh):
 					djs.join(tri_p,tri_q)
-					
+					tri_edge[tri_p].remove(uv)
+					tri_edge[tri_q].remove(uv)
+			
 				
 	else:
 		for abc,_pts in tri_points.items():
