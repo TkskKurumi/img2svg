@@ -346,7 +346,10 @@ class mesh:
 			R=C.x
 			edgs=[(A,C),(A,B),(B,C)]
 			for x in range(ceil(L),floor(R)+1):
-				e1,e2=[_ for _ in edgs if(_[0].x!=_[1].x and _[0].x<= x and x<=_[1].x)][:2]
+				az=[_ for _ in edgs if(_[0].x!=_[1].x and _[0].x<= x and x<=_[1].x)]
+				if(len(az)<2):
+					continue
+				e1,e2=az[:2]
 					
 				y1=func(*e1,x)
 				y2=func(*e2,x)

@@ -145,7 +145,7 @@ class tree:
         if(self.fa.get(u,u)==self.fa.get(v,v)):
             return self.fa[u]
         raise Exception("Node not in same tree")
-def kmeans_with_weights(k,points,weights,n_iter=10):
+def kmeans_with_weights(k,points,weights,n_iter=10,az=None):
 	typ=np.float32
 	def asarr(i):
 		if(isinstance(i,np.ndarray)):
@@ -158,13 +158,16 @@ def kmeans_with_weights(k,points,weights,n_iter=10):
 	n=len(points)
 	p_shape=points[0].shape
 	ret=random.sample(points,k)
+	idxs=list(range(k))
+	if(az is None):
+		az=int((k**0.3)*5)
 	for i_iter in range(n_iter):
 		sum_point=[np.zeros(p_shape,typ) for _ in range(n)]
 		sum_weight=[0 for _ in range(n)]
 		for idx,p in enumerate(points):
 			best_jdx=0
 			best_dist=dist(p,ret[0])
-			for jdx in range(1,k):
+			for jdx in random.sample(idxs,az):
 				_dist=dist(p,ret[jdx])
 				if(_dist<best_dist):
 					best_dist=_dist
@@ -192,6 +195,7 @@ class wh_iter:
 			return ret
 	def __iter__(self):
 		return self
+
 if(__name__=='__main__'):
 	for x,y in wh_iter(10,10):
 		print(x,y)

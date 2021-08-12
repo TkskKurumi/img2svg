@@ -24,7 +24,7 @@ def smooth_points(points,step=2.4,start=0,end=None):
 	if(len(ret)<10):
 		return points
 	return ret
-def ldl2svg(loops,dots,lines,smooth=1.7,blur_dots=1.2,scale=3,cutdown_dots=10000,line_alpha=0.5,loop_stroke=False):
+def ldl2svg(loops,dots,lines,smooth=1.7,blur_dots=1.2,scale=3,cutdown_dots=10000,line_alpha=0.5,loop_stroke=True,loop_stroke_width=1):
 	out=""
 	def prt(*args,end='\n'):
 		nonlocal out
@@ -49,7 +49,7 @@ def ldl2svg(loops,dots,lines,smooth=1.7,blur_dots=1.2,scale=3,cutdown_dots=10000
 			f="L"
 		
 		if(loop_stroke):
-			prt('Z" fill="RGB%s" stroke="RGB(%d,%d,%d,70%%)" stroke-width="%.1f" />'%(c,*c[:3],2*scale))
+			prt('Z" fill="RGB%s" stroke="RGB(%d,%d,%d,70%%)" stroke-width="%.1f" />'%(c,*c[:3],loop_stroke_width*scale))
 		else:
 			prt('Z" fill="RGB%s" stroke="none" />'%(c,))
 	for i in dots:
@@ -86,10 +86,133 @@ dxy8=[(dx8[i],dy8[i]) for i in range(8)]
 dx4=[0,0,1,-1]
 dy4=[1,-1,0,0]
 dxy4=[(dx4[i],dy4[i]) for i in range(4)]
-def img2loops(img,n_points=int(4e4),sample_points=None,sample_ss=1e6,ensure_corner=True,debug=True):
+def img2loops1(img,ss=5e5,n_colors=256,sample_color=None,n_points=int(1e4),merge_samecolor_tri=False,debug=True,merge_thresh=6):
+	w,h=img.size
+	rate=(ss/w/h)**0.5
+	sample_w,sample_h=int(w*rate),int(h*rate)
+	simg=img.resize((sample_w,sample_h),Image.LANCZOS)
+	if(sample_color is None):
+		sample_color=int((n_colors*ss)**0.5)
+	colors=[]
+	if(debug):
+		import time
+		start_time=time.time()
+	for i in range(sample_color):
+		x=random.randrange(w)
+		y=random.randrange(h)
+		c=img.getpixel((x,y))
+		colors.append(c)
+	colors=kmeans_with_weights(n_colors,colors,[1 for i in colors],n_iter=3)
+	colors=[npa2tuple_color(i) for i in colors]
+	def nearest(colors,c):
+		ret=None
+		retdist=0
+		for i in colors:
+			d=colordis(c,i)
+			if((ret is None)or d<retdist):
+				retdist=d
+				ret=i
+		return ret
+	import kdt
+	KDT=kdt.kdt()
+	KDT.build([kdt.point(i) for i in colors])
+	if(debug):
+		import time
+		print('KDT size',KDT.size)
+		t=time.time()-start_time
+		start_time=time.time()
+		print('color kmeans use %.1f seconds'%t)
+	
+	for xy in wh_iter(sample_w,sample_h):
+		c=simg.getpixel(xy)
+		c=KDT.ann1(kdt.point(c)).arr
+		simg.putpixel(xy,c)
+	if(debug):
+		import time
+		t=time.time()-start_time
+		start_time=time.time()
+		print('color cutdown use %.1f seconds'%t)
+		simg.show()
+	points=[]
+	for xy in wh_iter(sample_w-1,sample_h-1):
+		x,y=xy
+		c=simg.getpixel(xy)
+		c1=simg.getpixel((x+1,y))
+		c2=simg.getpixel((x,y+1))
+		if(c!=c1 or c!=c2):
+			points.append(point(*xy))
+	if(debug):
+		import time
+		t=time.time()-start_time
+		start_time=time.time()
+		print('border detect use %.1f seconds'%t)
+	if(n_points is None):
+		n_points=int(len(points)**0.5)
+	if(n_points<len(points)):
+		if(debug):
+			print('%d points cutdown to %d points',len(points),n_points)
+		points=random.sample(points,n_points)
+	
+	M=mesh.delaunay(points)
+	if(debug):
+		import time
+		t=time.time()-start_time
+		start_time=time.time()
+		print('delaunay use %.1f seconds'%t)
+	loops=[]
+	tri_points=M.get_tri_integral_point()
+	def get(x,y):
+		return im.getpixel((int(x),int(y)))[:3]
+	tmp=lambda p:point(p.x*w/sample_w,p.y*h/sample_h)
+	if(merge_samecolor_tri):
+		#unfinished
+		djs=DJS()
+		tri_color=dict()
+		_sorted=lambda x:tuple(sorted(list(x)))
+		for abc,_pts in tri_points.items():
+			if(not _pts):
+				continue
+			a,b,c=abc
+			color=np.zeros((3,),np.float32)
+			
+			for x,y in _pts:
+				color+=np.array(get(x*w/sample_w,y*h/sample_h),np.float32)
+			color=npa2tuple_color(color/len(_pts))
+			tri_color[abc]=color
+		for uv in M.edges:
+			u,v=uv
+			if(len(M.edge2mesh[uv])==2):
+				p,q=M.edge2mesh[uv]
+				tri_p=_sorted(u,v,p)
+				tri_q=_sorted(u,v,q)
+				if(colordis(tri_color[tri_p],tri_color[tri_q])<merge_thresh):
+					djs.join(tri_p,tri_q)
+					
+				
+	else:
+		for abc,_pts in tri_points.items():
+			if(not _pts):
+				continue
+			a,b,c=abc
+			color=np.zeros((3,),np.float32)
+			
+			for x,y in _pts:
+				color+=np.array(get(x*w/sample_w,y*h/sample_h),np.float32)
+			color=npa2tuple_color(color/len(_pts))
+			A,B,C=M.points[a],M.points[b],M.points[c]
+			
+			loops.append((1,[tmp(A).xy,tmp(B).xy,tmp(C).xy],color))
+	if(debug):
+		import time
+		t=time.time()-start_time
+		start_time=time.time()
+		print('generate loops use %.1f seconds'%t)
+	return loops
+def img2loops(img,n_points=int(3e4),sample_points=None,sample_ss=1e6,ensure_corner=True,debug=True):
 	
 	import heapq
 	w,h=img.size
+	
 	rate=(sample_ss/w/h)**0.5
 	
 	sample_w,sample_h=int(w*rate),int(h*rate)
@@ -103,11 +226,11 @@ def img2loops(img,n_points=int(4e4),sample_points=None,sample_ss=1e6,ensure_corn
 	for x,y in random.sample(tmp,sample_points):
 		x=x+1
 		y=y+1
-		enmiao=0
+		enmiao=[]
 		c=sim.getpixel((x,y))
 		for dx,dy in dxy4:
-			enmiao+=colordis(sim.getpixel((x+dx,y+dy)),c)
-		heapq.heappush(pts,(-enmiao,(x,y)))
+			enmiao.append(colordis(sim.getpixel((x+dx,y+dy)),c))
+		heapq.heappush(pts,(min(enmiao)-max(enmiao),(x,y)))
 		if(len(pts)>int(n_points*0.8)):
 			heapq.heappop(pts)
 		pts1.append((x,y))
@@ -147,10 +270,10 @@ def img2loops(img,n_points=int(4e4),sample_points=None,sample_ss=1e6,ensure_corn
 		loops.append((1,[A.xy,B.xy,C.xy],color))
 	return loops
 if(__name__=='__main__'):
-	im=Image.open(r"C:\Users\xiaofan\AppData\Roaming\Typora\themes\autumnus-assets\WPxSwEYVtfm6Ba1.png")
+	im=Image.open(r"C:\Users\xiaofan\AppData\Roaming\Typora\themes\autumnus-assets\5XEclgMCLtPhfSb.jpg").convert("RGB")
 	import time
 	tm=time.time()
-	loops=img2loops(im)
+	loops=img2loops1(im)
 	tm=time.time()-tm
 	print("%.1f seconds"%tm)
 	s=ldl2svg(loops,[],[],scale=0.3)
