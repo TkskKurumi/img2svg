@@ -1,4 +1,4 @@
-from myGeometry import *
+from myGeometry import point as gPoint
 import random
 class point:
 	def __init__(self,arr):
@@ -12,8 +12,36 @@ class point:
 				print(type(other),str(other)[:20])
 				raise e
 		return ret
+	def __hash__(self):
+		if(isinstance(self.arr,gPoint)):
+			return hash(self.arr.xy)
+		else:
+			return hash(self.arr)
+	def aspoint(self):
+		return gPoint(self.arr[0],self.arr[1])
+	def __mul__(self,other):
+		ret=0
+		for idx,i in enumerate(self.arr):
+			ret+=i*other.arr[idx]
+		return ret
+	def __sub__(self,other):
+		arr=[i-other.arr[idx] for idx,i in enumerate(self.arr)]
+		return point(arr)
+	def distO(self):
+		return sum([i*i for i in self.arr])**0.5
 	def dist_line(self,A,B):
-		pass
+		AB=B-A
+		AP=self-A
+		dot=AB*AP
+		dAP=AP.distO()
+		tmp=dot/AB.distO()
+		if(dAP*dAP<tmp*tmp-(1e-4)):
+			print(dAP,tmp)
+			print('cosine=',tmp/AB.distO())
+			print(AB.arr,AP.arr,dot)
+			exit()
+		
+		return abs((dAP*dAP-tmp*tmp)**0.5)
 class kdt:
 	def __init__(self):
 		self.node_points=[]
@@ -63,8 +91,23 @@ class kdt:
 			return ret
 		if(p.dist(self.left_point[u])<p.dist(self.right_point[u])):
 			ret=self.ann1(p,self.left_child[u])
-			#if(ret.dist(p)
 			return ret
+			if(ret.dist(p)>p.dist_line(self.left_point[u],self.right_point[u])):
+				ret1=self.ann1(p,self.right_child[u])
+				if(ret1.dist(p)<ret.dist(p)):
+					return ret1
+				else:
+					return ret
+			else:
+				return ret
 		else:
-			return self.ann1(p,self.right_child[u])
-		
+			ret=self.ann1(p,self.right_child[u])
+			return ret
+			if(ret.dist(p)>p.dist_line(self.left_point[u],self.right_point[u])):
+				ret1=self.ann1(p,self.left_child[u])
+				if(ret1.dist(p)<ret.dist(p)):
+					return ret1
+				else:
+					return ret
+			else:
+				return ret

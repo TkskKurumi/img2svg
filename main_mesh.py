@@ -86,7 +86,35 @@ dxy8=[(dx8[i],dy8[i]) for i in range(8)]
 dx4=[0,0,1,-1]
 dy4=[1,-1,0,0]
 dxy4=[(dx4[i],dy4[i]) for i in range(4)]
-def img2loops1(img,ss=1e5,n_colors=512,sample_color=None,n_points=None,merge_samecolor_tri=False,debug=True,merge_thresh=6,point_cut_method='sort',ensure_corner=True):
+def kmeans_with_kdt(k,points,n_iter=3,wei=None):
+	import kdt
+	def convert(p):
+		if(isinstance(p,point)):
+			return kdt.point(p.xy)
+		else:
+			return kdt.point(p)
+	rets=random.sample(points,k)
+	for iter in range(n_iter):
+		print('ln98',len(rets))
+		K=kdt.kdt()
+		K.build([convert(_) for _ in rets])
+		cnt=dict()
+		sum=dict()
+		for idx,i in enumerate(points):
+			nn=K.ann1(convert(i))
+			if(wei is None):
+				cnt[nn]=cnt.get(nn,0)+1
+				sum[nn]=sum.get(nn,point(0,0))+i
+			else:
+				cnt[nn]=cnt.get(nn,0)+wei[idx]
+				sum[nn]=sum.get(nn,point(0,0))+i*wei[idx]
+		rets=[]
+		for i in cnt:
+			rets.append(sum[i]/cnt[i])
+		if(len(rets)<k):
+			rets.extend(random.sample(points,k-len(rets)))
+	return rets
+def img2loops1(img,ss=5e5,n_colors=128,sample_color=None,n_points=None,merge_samecolor_tri=False,debug=True,merge_thresh=6,point_cut_method='kmeans',ensure_corner=True):
 	w,h=img.size
 	rate=(ss/w/h)**0.5
 	sample_w,sample_h=int(w*rate),int(h*rate)
@@ -103,7 +131,7 @@ def img2loops1(img,ss=1e5,n_colors=512,sample_color=None,n_points=None,merge_sam
 		c=img.getpixel((x,y))
 		colors.add(c)
 	if(n_points is None):
-		n_points=int(ss/12)
+		n_points=int(ss/10)
 		
 	colors=list(colors)
 	colors=kmeans_with_weights(n_colors,colors,[1 for i in colors],n_iter=3)
@@ -146,7 +174,7 @@ def img2loops1(img,ss=1e5,n_colors=512,sample_color=None,n_points=None,merge_sam
 		c2=simg.getpixel((x,y+1))
 		if(c!=c1 or c!=c2):
 			points.append(point(*xy))
-			if(point_cut_method=='sort'):
+			if(point_cut_method in ['sort','kmeans']):
 				p_diff.append(colordis(c,c1)+colordis(c,c2))
 	if(debug):
 		import time
@@ -170,6 +198,10 @@ def img2loops1(img,ss=1e5,n_colors=512,sample_color=None,n_points=None,merge_sam
 			
 			points=[_[-1] for _ in az]+random.sample(points,n_points-len(az))
 			points=list(set(points))
+		elif(point_cut_method=='kmeans'):
+			
+			points=kmeans_with_kdt(n_points,points,n_iter=3,wei=p_diff)
+			#points=[point(int(p.x),int(p.y)) for p in points]
 		if(debug):
 			import time
 			t=time.time()-start_time
@@ -179,6 +211,8 @@ def img2loops1(img,ss=1e5,n_colors=512,sample_color=None,n_points=None,merge_sam
 		for x in [0,sample_w-2]:
 			for y in [0,sample_h-2]:
 				points.append(point(x,y))
+	#points=list(set(points))
+	print('%d points',len(points))
 	M=mesh.delaunay(points)
 	if(debug):
 		import time
@@ -227,15 +261,19 @@ def img2loops1(img,ss=1e5,n_colors=512,sample_color=None,n_points=None,merge_sam
 				
 	else:
 		for abc,_pts in tri_points.items():
-			if(not _pts):
-				continue
 			a,b,c=abc
-			color=np.zeros((3,),np.float32)
-			
-			for x,y in _pts:
-				color+=np.array(get(x*w/sample_w,y*h/sample_h),np.float32)
-			color=npa2tuple_color(color/len(_pts))
 			A,B,C=M.points[a],M.points[b],M.points[c]
+			if(not _pts):
+				CC=(A+B+C)/3
+				color=get(CC.x*w/sample_w,CC.y*h/sample_h)
+			else:
+				
+				color=np.zeros((3,),np.float32)
+				
+				for x,y in _pts:
+					color+=np.array(get(x*w/sample_w,y*h/sample_h),np.float32)
+				color=npa2tuple_color(color/len(_pts))
+			
 			
 			loops.append((1,[tmp(A).xy,tmp(B).xy,tmp(C).xy],color))
 	if(debug):
@@ -243,6 +281,7 @@ def img2loops1(img,ss=1e5,n_colors=512,sample_color=None,n_points=None,merge_sam
 		t=time.time()-start_time
 		start_time=time.time()
 		print('generate loops use %.1f seconds'%t)
+	print("%d loops"%len(loops))
 	return loops
 def img2loops(img,n_points=int(3e4),sample_points=None,sample_ss=1e6,ensure_corner=True,debug=True):
 	
@@ -306,7 +345,7 @@ def img2loops(img,n_points=int(3e4),sample_points=None,sample_ss=1e6,ensure_corn
 		loops.append((1,[A.xy,B.xy,C.xy],color))
 	return loops
 if(__name__=='__main__'):
-	im=Image.open(r"C:\Users\xiaofan\AppData\Roaming\Typora\themes\autumnus-assets\3qUeXmrLdczVxhf.jpg").convert("RGB")
+	im=Image.open(r"C:\Users\xiaofan\AppData\Roaming\Typora\themes\autumnus-assets\pbtEyWkQ9aI2SCK.png").convert("RGB")
 	import time
 	tm=time.time()
 	loops=img2loops1(im)

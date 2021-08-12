@@ -34,6 +34,8 @@ class point:
 		return self.x*other.y-self.y*other.x
 	def __str__(self):
 		return "(%.3f,%.3f)"%(self.x,self.y)
+	def __hash__(self):
+		return hash((int(self.x),int(self.y)))
 	def is_zero(self):
 		return asgn(self.x)==0 and asgn(self.y)==0
 	def distO(self):
