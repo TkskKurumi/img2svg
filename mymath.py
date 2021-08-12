@@ -15,14 +15,14 @@ def solute_quadratic_equation(a,b,c):
 	x2=(-b-delta**0.5)/2/a
 	return (x1,x2)
 solve_quadratic_equation=solute_quadratic_equation
-def asgn(a,eps=1e-8):
+def asgn(a,eps=1e-9):
 	if(a>eps):
 		return 1
 	elif(a<-eps):
 		return -1
 	else:
 		return 0
-def aequal(a,b,eps=1e-8):
+def aequal(a,b,eps=1e-9):
 	return asgn(a-b,eps)==asgn(b-a,eps)
 def mean(l):
 	return sum(l)/len(l)

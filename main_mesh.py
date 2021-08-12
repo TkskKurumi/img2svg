@@ -114,7 +114,7 @@ def kmeans_with_kdt(k,points,n_iter=3,wei=None):
 		if(len(rets)<k):
 			rets.extend(random.sample(points,k-len(rets)))
 	return rets
-def img2loops1(img,ss=5e5,n_colors=128,sample_color=None,n_points=None,merge_samecolor_tri=False,debug=True,merge_thresh=6,point_cut_method='kmeans',ensure_corner=True):
+def img2loops1(img,ss=1e5,n_colors=128,sample_color=None,n_points=None,merge_samecolor_tri=False,debug=True,merge_thresh=6,point_cut_method='kmeans',ensure_corner=True):
 	w,h=img.size
 	rate=(ss/w/h)**0.5
 	sample_w,sample_h=int(w*rate),int(h*rate)
@@ -200,7 +200,7 @@ def img2loops1(img,ss=5e5,n_colors=128,sample_color=None,n_points=None,merge_sam
 			points=list(set(points))
 		elif(point_cut_method=='kmeans'):
 			
-			points=kmeans_with_kdt(n_points,points,n_iter=3,wei=p_diff)
+			points=kmeans_with_kdt(n_points,points,n_iter=3,wei=[i**0.8 for i in p_diff])
 			#points=[point(int(p.x),int(p.y)) for p in points]
 		if(debug):
 			import time
@@ -211,8 +211,10 @@ def img2loops1(img,ss=5e5,n_colors=128,sample_color=None,n_points=None,merge_sam
 		for x in [0,sample_w-2]:
 			for y in [0,sample_h-2]:
 				points.append(point(x,y))
-	#points=list(set(points))
+	enmiao=1e3
+	points=list(set([point(int(p.x*enmiao),int(p.y*enmiao)) for p in points]))
 	print('%d points',len(points))
+	points=[point(p.x/enmiao,p.y/enmiao) for p in points]
 	M=mesh.delaunay(points)
 	if(debug):
 		import time
