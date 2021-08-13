@@ -44,7 +44,8 @@ def ldl2svg(loops,dots,lines,smooth=1.7,blur_dots=1.2,scale=3,cutdown_dots=10000
 		ys=[y for x,y in points]
 		dx=max(xs)-min(xs)
 		dy=max(ys)-min(ys)
-		if(loop_trim and (dx/(dy+0.1)>70 or dy/(dx+0.1)>70)):
+		az=max(dx,dy)/((min(dx,dy)+0.1)**0.5)
+		if(loop_trim and az>30):
 			if(dx<loop_stroke_width and dy<loop_stroke_width):
 				continue
 		
