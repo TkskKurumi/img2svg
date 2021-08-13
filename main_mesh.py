@@ -127,7 +127,7 @@ def kmeans_with_kdt(k,points,n_iter=3,wei=None,progress_cb=None):
 		if(len(rets)<k):
 			rets.extend(random.sample(points,k-len(rets)))
 	return rets
-def img2loops(img,ss=1e5,n_colors=64,sample_color=None,n_points=None,merge_samecolor_tri=False,debug=True,merge_thresh=6,point_cut_method='kmeans',ensure_corner=True,smooth_points=3,print_progress=True):
+def img2loops(img,ss=1e5,n_colors=64,sample_color=None,n_points=None,merge_samecolor_tri=False,debug=True,merge_thresh=6,point_cut_method='none',ensure_corner=True,smooth_points=3,print_progress=True):
 	w,h=img.size
 	rate=(ss/w/h)**0.5
 	sample_w,sample_h=int(w*rate),int(h*rate)
@@ -267,6 +267,7 @@ def img2loops(img,ss=1e5,n_colors=64,sample_color=None,n_points=None,merge_samec
 			t=time.time()-start_time
 			start_time=time.time()
 			print('point cutdown use %.1f seconds'%t)
+	
 	if(ensure_corner):
 		for x in [0,sample_w-2]:
 			for y in [0,sample_h-2]:
@@ -371,19 +372,19 @@ if(__name__=='__main__'):
 		im=Image.open(random.choice(ims))
 	else:
 		im=None
-	for method in ['kmeans']:
+	for method in ['kmeans','sort']:
 		
 		import time
 		tm=time.time()
-		loops=img2loops(im,point_cut_method=method)
+		loops=img2loops(im,n_colors=24,ss=1.2e5,point_cut_method=method)
 		tm=time.time()-tm
 		
-		ww=1080
-		hh=1920
+		ww=1600
+		hh=900
 		w,h=im.size
 		s=ldl2svg(loops,[],[],scale=min(ww/w,hh/h))
 		from os import path
-		with open(path.join(path.dirname(__file__),'sample_method=%s.svg'%method),"w") as f:
+		with open(path.join(path.dirname(__file__),'sample_loops=%d_method=%s.svg'%(len(loops),method)),"w") as f:
 			f.write(s)
 		performance=len(loops)/tm
 		print("===[method=%s,\ttime=%d seconds,\tperformance=%d loop/sec]==="%(method,tm,performance))

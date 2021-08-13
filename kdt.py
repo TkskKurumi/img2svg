@@ -1,8 +1,10 @@
 from myGeometry import point as gPoint
 import random
+import numpy as np
 class point:
 	def __init__(self,arr):
 		self.arr=arr
+		self.hash=None
 	def dist(self,other):
 		ret=0
 		for idx,i in enumerate(self.arr):
@@ -12,9 +14,24 @@ class point:
 				print(type(other),str(other)[:20])
 				raise e
 		return ret
+	
+	def __str__(self):
+		return str(self.arr)
+	def __repr__(self):
+		return self.arr.__repr__()
+	def __eq__(self,other):
+		return hash(self)==hash(other)
 	def __hash__(self):
+		if(self.hash is not None):
+			return self.hash
 		if(isinstance(self.arr,gPoint)):
-			return hash(self.arr.xy)
+			return hash(self.arr)
+		elif(isinstance(self.arr,np.ndarray)):
+			
+			enmiao=1e2
+			h=hash(tuple([int(i*enmiao) for i in self.arr]))
+			self.hash=h
+			return h
 		else:
 			return hash(self.arr)
 	def aspoint(self):
