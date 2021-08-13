@@ -248,7 +248,7 @@ def img2loops(img,ss=1e4,n_points=None,n_colors=64,print_progress=True,ensure_co
 		k=int(rate*le)
 		if(k<le and k):
 			#print("ln239")
-			wei=[pixel_wei[xy] for xy in edges]
+			wei=[pixel_wei[xy]**7 for xy in edges]
 			_points=kmeans_with_kdt(k,_points,wei=wei)
 			if(len(_points)>k):
 				print("wtf")
@@ -307,7 +307,7 @@ if(__name__=='__main__'):
 		im=Image.open(random.choice(ims))
 	import time
 	tm=time.time()
-	loops=img2loops(im,n_colors=32,ss=3e5,debug=True)
+	loops=img2loops(im,n_colors=32,ss=5e4,debug=True)
 	tm=time.time()-tm
 	
 	ww=1600

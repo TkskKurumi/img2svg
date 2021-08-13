@@ -372,11 +372,11 @@ if(__name__=='__main__'):
 		im=Image.open(random.choice(ims))
 	else:
 		im=None
-	for method in ['kmeans','sort']:
+	for method in ['kmeans']:
 		
 		import time
 		tm=time.time()
-		loops=img2loops(im,n_colors=24,ss=1.2e5,point_cut_method=method)
+		loops=img2loops(im,n_colors=24,ss=1.9e5,point_cut_method=method)
 		tm=time.time()-tm
 		
 		ww=1600
