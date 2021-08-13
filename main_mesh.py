@@ -204,16 +204,20 @@ def img2loops(img,ss=1e5,n_colors=64,sample_color=None,n_points=None,merge_samec
 		#simg.show()
 	points=[]
 	p_diff=[]
-	for xy in wh_iter(sample_w-1,sample_h-1):
+	for xy in wh_iter(sample_w-2,sample_h-2):
 		x,y=xy
+		x=x+1
+		y=y+1
 		if(print_progress):
 			progbar("detect border",(y*(sample_w-1)+x)/(sample_w-1)/(sample_h-1))
-		c=simg.getpixel(xy)
-		c1=simg.getpixel((x+1,y))
-		c2=simg.getpixel((x,y+1))
-		c3=simg.getpixel((x+1,y+1))
+		c=simg.getpixel((x,y))
+		c1=simg.getpixel((x,y+1))
+		c2=simg.getpixel((x+1,y))
+		c3=simg.getpixel((x,y-1))
+		c4=simg.getpixel((x-1,y))
+		
 		#cs=[c,c1,c2,c3]
-		cs=[c,c1,c2]
+		cs=[c,c1,c2,c3,c4]
 		cd=0
 		cm=float('inf')
 		for i in range(len(cs)):
