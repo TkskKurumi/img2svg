@@ -358,7 +358,7 @@ class mesh:
 				ret_+=[(x,y) for y in range(UP,LO+1)]
 			ret[(a,b,c)]=ret_
 		return ret
-	def delaunay(points,debug=False):
+	def delaunay(points,debug=False,prog_cb=None):
 		points=sorted(points,key=lambda x:x.xy)
 		G=graph()
 		def illust():
@@ -372,14 +372,30 @@ class mesh:
 						edge2mesh[e]=edge2mesh.get(e,set())
 						edge2mesh[e].add(w)
 			mesh(points,G.edges,G.neibours,dict(),edge2mesh).illust().show()
+		mx_prog=0
+		now_prog=0
+		def calc_mx_prog(l,r):
+			nonlocal mx_prog
+			mx_prog+=r-l+1
+			if(r-l<=2):
+				return
+			mid=(l+r)>>1
+			calc_mx_prog(l,mid)
+			calc_mx_prog(mid+1,r)
+			return
+		if(prog_cb):
+			calc_mx_prog(0,len(points)-1)
 		def div(l,r):
-			nonlocal points,G
+			nonlocal points,G,now_prog,mx_prog
 			#print(l,r)
 			if(r-l<=2):
 				for i in range(l,r+1):
 					for j in range(i+1,r+1):
 						#print("ln367",points[i],points[j])
 						G.add_edge(i,j)
+				if(prog_cb):
+					now_prog+=r-l+1
+					prog_cb(now_prog/mx_prog)
 				return
 			
 			mid=(l+r)>>1
@@ -477,7 +493,9 @@ class mesh:
 					if(debug):print('ln444 add',points[nowl],points[nowr])
 					if(debug):illust()
 					G.add_edge(nowl,nowr)
-					
+			if(prog_cb):
+				now_prog+=r-l+1
+				prog_cb(now_prog/mx_prog)
 		div(0,len(points)-1)
 		edge2mesh={}
 		for u,v in G.edges:
