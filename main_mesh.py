@@ -45,7 +45,8 @@ def ldl2svg(loops,dots,lines,smooth=1.7,blur_dots=1.2,scale=3,cutdown_dots=10000
 		dx=max(xs)-min(xs)
 		dy=max(ys)-min(ys)
 		if(loop_trim and (dx/(dy+0.1)>100 or dy/(dx+0.1)>100)):
-			continue
+			if(dx<2 and dy<2):
+				continue
 		
 		points=smooth_points(points,smooth)
 		prt('<path d="',end='')
@@ -125,7 +126,7 @@ def kmeans_with_kdt(k,points,n_iter=3,wei=None,progress_cb=None):
 		if(len(rets)<k):
 			rets.extend(random.sample(points,k-len(rets)))
 	return rets
-def img2loops1(img,ss=1e5,n_colors=64,sample_color=None,n_points=None,merge_samecolor_tri=False,debug=True,merge_thresh=6,point_cut_method='kmeans',ensure_corner=True,smooth_points=3,print_progress=True):
+def img2loops(img,ss=1e5,n_colors=64,sample_color=None,n_points=None,merge_samecolor_tri=False,debug=True,merge_thresh=6,point_cut_method='kmeans',ensure_corner=True,smooth_points=3,print_progress=True):
 	w,h=img.size
 	rate=(ss/w/h)**0.5
 	sample_w,sample_h=int(w*rate),int(h*rate)
@@ -353,73 +354,24 @@ def img2loops1(img,ss=1e5,n_colors=64,sample_color=None,n_points=None,merge_same
 		print('generate loops use %.1f seconds'%t)
 	print("%d loops"%len(loops))
 	return loops
-def img2loops(img,n_points=int(3e4),sample_points=None,sample_ss=1e6,ensure_corner=True,debug=True):
-	
-	import heapq
-	w,h=img.size
-	
-	rate=(sample_ss/w/h)**0.5
-	
-	sample_w,sample_h=int(w*rate),int(h*rate)
-	sim=img.resize((sample_w,sample_h),Image.LANCZOS)
-	pts=[]
-	pts1=[]
-	tmp=list(wh_iter(sample_w-2,sample_h-2))
-	if(sample_points is None):
-		sample_points=int((n_points*sample_ss)**0.5)
-	if(debug):tm=__import__('time').time()
-	for x,y in random.sample(tmp,sample_points):
-		x=x+1
-		y=y+1
-		enmiao=[]
-		c=sim.getpixel((x,y))
-		for dx,dy in dxy4:
-			enmiao.append(colordis(sim.getpixel((x+dx,y+dy)),c))
-		heapq.heappush(pts,(min(enmiao)-max(enmiao),(x,y)))
-		if(len(pts)>int(n_points*0.8)):
-			heapq.heappop(pts)
-		pts1.append((x,y))
-	pts=[_[1] for _ in pts]+random.sample(pts1,n_points-len(pts))
-	pts=list(set(pts))
-	if(debug):
-		print('init',__import__('time').time()-tm)
-		tm=__import__('time').time()
-	
-	'''pts=kmeans_with_weights(n_points,pts,wei,n_iter=2)
-	if(debug):
-		print('kmeans',__import__('time').time()-tm)
-		tm=__import__('time').time()'''
-	pts=[point(i[0]*w/sample_w,i[1]*h/sample_h) for i in pts]
-	#print(pts)
-	
-	M=mesh.delaunay(pts)
-	if(debug):
-		print('mesh',__import__('time').time()-tm)
-		tm=__import__('time').time()
-		#M.illust().show()
-	loops=[]
-	tri_points=M.get_tri_integral_point()
-	def get(x,y):
-		return im.getpixel((int(x),int(y)))[:3]
-	debug_f=True
-	for abc,_pts in tri_points.items():
-		if(not _pts):
-			continue
-		a,b,c=abc
-		color=np.zeros((3,),np.float32)
-		
-		for x,y in _pts:
-			color+=np.array(get(x,y),np.float32)
-		color=npa2tuple_color(color/len(_pts))
-		A,B,C=M.points[a],M.points[b],M.points[c]
-		loops.append((1,[A.xy,B.xy,C.xy],color))
-	return loops
+
 if(__name__=='__main__'):
-	for method in ['kmeans','sort']:
-		im=Image.open(r"C:\Users\xiaofan\AppData\Roaming\Typora\themes\autumnus-assets\3qUeXmrLdczVxhf.jpg").convert("RGB")
+	from glob import glob
+	from os import path
+	import random
+	pth=path.dirname(__file__)
+	ims=list(glob(path.join(pth,'*.jpg')))
+	ims+=list(glob(path.join(pth,'*.png')))
+	if(ims):
+		im=Image.open(random.choice(ims))
+	else:
+		im=None
+	for method in ['kmeans']:
+		if(im is None):
+			im=Image.open(r"C:\Users\xiaofan\AppData\Roaming\Typora\themes\autumnus-assets\3qUeXmrLdczVxhf.jpg").convert("RGB")
 		import time
 		tm=time.time()
-		loops=img2loops1(im,point_cut_method=method)
+		loops=img2loops(im,point_cut_method=method)
 		tm=time.time()-tm
 		
 		ww=1280
