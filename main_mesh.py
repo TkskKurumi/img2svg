@@ -241,7 +241,7 @@ def img2loops(img,ss=1e5,n_colors=64,sample_color=None,n_points=None,merge_samec
 			az=[]
 			for idx,p in enumerate(points):
 				if(print_progress):
-					progbar("cut down points",idx/len(points))
+					progbar("merge points",idx/len(points))
 				import heapq
 				heapq.heappush(az,(p_diff[idx],random.random(),p))
 				if(len(az)>int(n_points*0.9)):
