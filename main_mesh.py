@@ -40,21 +40,22 @@ def ldl2svg(loops,dots,lines,smooth=1.7,blur_dots=1.2,scale=3,cutdown_dots=10000
 	prt('<svg xmlns="http://www.w3.org/2000/svg" version="1.1">')
 	for loop in loops:
 		area,points,c=loop
+		xs=[x for x,y in points]
+		ys=[y for x,y in points]
+		dx=max(xs)-min(xs)
+		dy=max(ys)-min(ys)
+		if(loop_trim and (dx/(dy+0.1)>100 or dy/(dx+0.1)>100)):
+			continue
+		
 		points=smooth_points(points,smooth)
 		prt('<path d="',end='')
 		f="M"
-		xs=list()
-		ys=list()
+		
 		for x,y in points:
-			xs.append(x)
-			ys.append(y)
 			prt(f,end='')
 			prt("%.2f"%(x*scale),"%.2f"%(y*scale),end=' ')
 			f="L"
-		dx=max(xs)-min(xs)
-		dy=max(ys)-min(ys)
-		if(loop_trim and (dx/(dy+0.1)>10 or dy/(dx+0.1)>10)):
-			continue
+		
 		if(loop_stroke):
 			prt('Z" fill="RGB%s" stroke="RGB(%d,%d,%d,70%%)" stroke-width="%.1f" />'%(c,*c[:3],loop_stroke_width*scale))
 		else:
@@ -124,7 +125,7 @@ def kmeans_with_kdt(k,points,n_iter=3,wei=None,progress_cb=None):
 		if(len(rets)<k):
 			rets.extend(random.sample(points,k-len(rets)))
 	return rets
-def img2loops1(img,ss=4e5,n_colors=64,sample_color=None,n_points=None,merge_samecolor_tri=False,debug=True,merge_thresh=6,point_cut_method='kmeans',ensure_corner=True,smooth_points=3,print_progress=True):
+def img2loops1(img,ss=1e5,n_colors=64,sample_color=None,n_points=None,merge_samecolor_tri=False,debug=True,merge_thresh=6,point_cut_method='kmeans',ensure_corner=True,smooth_points=3,print_progress=True):
 	w,h=img.size
 	rate=(ss/w/h)**0.5
 	sample_w,sample_h=int(w*rate),int(h*rate)
@@ -187,6 +188,7 @@ def img2loops1(img,ss=4e5,n_colors=64,sample_color=None,n_points=None,merge_same
 		print('color kmeans use %.1f seconds'%t)
 	
 	for xy in wh_iter(sample_w,sample_h):
+		x,y=xy
 		if(print_progress):
 			progbar("cut down color",(y*sample_w+x)/sample_w/sample_h)
 		c=simg.getpixel(xy)
