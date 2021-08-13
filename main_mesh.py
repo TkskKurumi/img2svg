@@ -251,7 +251,7 @@ def img2loops(img,ss=1e5,n_colors=64,sample_color=None,n_points=None,merge_samec
 			points=list(set(points))
 		elif(point_cut_method=='kmeans'):
 			if(print_progress):
-				cb=lambda prog:progbar("cut down points",prog)
+				cb=lambda prog:progbar("merge points",prog)
 			else:
 				cb=None
 			points=kmeans_with_kdt(n_points,points,n_iter=4,wei=[i**8 for i in p_diff],progress_cb=cb)
