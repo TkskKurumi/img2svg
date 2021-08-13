@@ -24,7 +24,7 @@ def smooth_points(points,step=2.4,start=0,end=None):
 	if(len(ret)<10):
 		return points
 	return ret
-def ldl2svg(loops,dots,lines,smooth=1.7,blur_dots=1.2,scale=3,cutdown_dots=10000,line_alpha=0.5,loop_stroke=True,loop_stroke_width=1.2,loop_trim=True):
+def ldl2svg(loops,dots,lines,smooth=1.7,blur_dots=1.2,scale=3,cutdown_dots=10000,line_alpha=0.5,loop_stroke=True,loop_stroke_width=0.5,loop_trim=True):
 	out=""
 	def prt(*args,end='\n'):
 		nonlocal out
@@ -46,7 +46,7 @@ def ldl2svg(loops,dots,lines,smooth=1.7,blur_dots=1.2,scale=3,cutdown_dots=10000
 		dy=max(ys)-min(ys)
 		az=max(dx,dy)/((min(dx,dy)+0.1)**0.5)
 		if(loop_trim and az>30):
-			if(dx<loop_stroke_width*2 or dy<loop_stroke_width*2):
+			if(dx<loop_stroke_width*3 or dy<loop_stroke_width*3):
 				continue
 		
 		points=smooth_points(points,smooth)
@@ -138,8 +138,7 @@ def img2loops(img,ss=1e4,n_points=None,n_colors=64,print_progress=True,ensure_co
 	last_prog=time.time()
 	i_prog=0
 	first_prog=dict()
-	if(n_points is None):
-		n_points=int(min((ss**0.5)*30,ss/3))
+	
 	def prog_cb(title):
 		if(print_progress):
 			def inner(prog,title=title):
@@ -188,7 +187,7 @@ def img2loops(img,ss=1e4,n_points=None,n_colors=64,print_progress=True,ensure_co
 	for xy in wh_iter(sample_w,sample_h):
 		x,y=xy
 		if(print_progress):
-			progbar("simplify image color",(y*sample_w+x)/sample_w/sample_h)
+			progbar("simplify image",(y*sample_w+x)/sample_w/sample_h)
 		c=simg.getpixel(xy)
 		c=K.ann1(kdt.point(c)).arr
 		#c=npa2tuple_color(c)
@@ -198,44 +197,48 @@ def img2loops(img,ss=1e4,n_points=None,n_colors=64,print_progress=True,ensure_co
 		pass
 	pixel_group=DJS()
 	pixel_wei=dict()
+	all_edges=set()
 	for xy in wh_iter(sample_w-1,sample_h-1):
 		x,y=xy
 		if(print_progress):
 			progbar("join color block",(y*(sample_w-1)+x)/(sample_w-1)/(sample_h-1))
 		c=simg.getpixel(xy)
-		c1=simg.getpixel((x+1,y))
-		c2=simg.getpixel((x,y+1))
-		if(c==c1):
-			pixel_group.join(xy,(x+1,y))
-			pixel_group.find(xy)
-			pixel_group.find((x+1,y))
-		if(c==c2):
-			pixel_group.join(xy,(x,y+1))
-			pixel_group.find(xy)
-			pixel_group.find((x,y+1))
-		pixel_wei[xy]=colordis(c,c1)+colordis(c,c2)+1
-	group_edges=dict()
-	for xy in wh_iter(sample_w-1,sample_h-1):
-		x,y=xy
-		g=pixel_group.find(xy)
-		for dx,dy in [(0,1),(1,0)]:
-			x1=x+dx
-			y1=y+dy
-			xy1=(x1,y1)
-			g1=pixel_group.find(xy1)
-			if(g!=g1):
-				if(g not in group_edges):
-					group_edges[g]=set()
-				group_edges[g].add(xy)
-				if(g1 not in group_edges):
-					group_edges[g1]=set()
-				group_edges[g1].add(xy1)
+		pixel_wei[xy]=1
+		for dx,dy in [(0,1),(1,0),(1,1)]:
+			x1,y1=x+dx,y+dy
+			c1=simg.getpixel((x1,y1))
 			
+			if(c==c1):
+				pixel_group.join(xy,(x1,y1))
+				pixel_group.find(xy)
+				pixel_group.find((x1,y1))
+			else:
+				all_edges.add(xy)
+				all_edges.add((x1,y1))
+			pixel_wei[xy]+=colordis(c,c1)
+	group_area=dict()	
+	for xy in wh_iter(sample_w,sample_h):
+		g=pixel_group.find(xy)
+		group_area[g]=group_area.get(g,0)+1
+		
+	group_edges=dict()
+	for idx,xy in enumerate(all_edges):
+		if(print_progress):
+			progbar("add edges",idx/len(all_edges))
+		g=pixel_group.find(xy)
+		if(g not in group_edges):
+			group_edges[g]=list()
+		group_edges[g].append(xy)
+	if(n_points is None):
+		n_points=0
+		for i in group_edges:
+			n_points+=group_area[i]**0.5
+		n_points=int(n_points*0.4)
 	now_points=sum([len(group_edges[i]) for i in group_edges])
 	_prog=0
 	rate=n_points/now_points
 	if(rate<1):
-		print("merge %d points into %d points"%(now_points,n_points))
+		print("merge %d points(from%d groups) into %d points"%(now_points,len(group_edges),n_points))
 		if(debug):
 			pass
 	points=list()
@@ -248,15 +251,16 @@ def img2loops(img,ss=1e4,n_points=None,n_colors=64,print_progress=True,ensure_co
 		k=int(rate*le)
 		if(k<le and k):
 			#print("ln239")
-			wei=[pixel_wei[xy]**7 for xy in edges]
-			_points=kmeans_with_kdt(k,_points,wei=wei)
+			wei=[pixel_wei.get(xy,1)**5 for xy in edges]
+			_points=kmeans_with_kdt(k,_points,wei=wei,n_iter=6)
 			if(len(_points)>k):
 				print("wtf")
 				exit()
-		else:
+		elif(k==0):
 			#print("ln242")
 			if(random.random()>rate):
 				_points=[]
+		
 		_prog+=le
 		if(print_progress):
 			progbar("merge points",_prog/now_points)
@@ -304,10 +308,10 @@ if(__name__=='__main__'):
 	ims=list(glob(path.join(pth,'*.jpg')))
 	ims+=list(glob(path.join(pth,'*.png')))
 	if(ims):
-		im=Image.open(random.choice(ims))
+		im=Image.open(random.choice(ims)).convert("RGB")
 	import time
 	tm=time.time()
-	loops=img2loops(im,n_colors=32,ss=5e4,debug=True)
+	loops=img2loops(im,n_colors=24,ss=3e5,debug=True)
 	tm=time.time()-tm
 	
 	ww=1600
