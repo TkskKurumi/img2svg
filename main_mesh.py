@@ -368,8 +368,7 @@ if(__name__=='__main__'):
 	else:
 		im=None
 	for method in ['kmeans']:
-		if(im is None):
-			im=Image.open(r"C:\Users\xiaofan\AppData\Roaming\Typora\themes\autumnus-assets\3qUeXmrLdczVxhf.jpg").convert("RGB")
+		
 		import time
 		tm=time.time()
 		loops=img2loops(im,point_cut_method=method)
