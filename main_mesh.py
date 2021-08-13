@@ -24,7 +24,7 @@ def smooth_points(points,step=2.4,start=0,end=None):
 	if(len(ret)<10):
 		return points
 	return ret
-def ldl2svg(loops,dots,lines,smooth=1.7,blur_dots=1.2,scale=3,cutdown_dots=10000,line_alpha=0.5,loop_stroke=False,loop_stroke_width=1.2):
+def ldl2svg(loops,dots,lines,smooth=1.7,blur_dots=1.2,scale=3,cutdown_dots=10000,line_alpha=0.5,loop_stroke=True,loop_stroke_width=1.2,loop_trim=True):
 	out=""
 	def prt(*args,end='\n'):
 		nonlocal out
@@ -43,11 +43,18 @@ def ldl2svg(loops,dots,lines,smooth=1.7,blur_dots=1.2,scale=3,cutdown_dots=10000
 		points=smooth_points(points,smooth)
 		prt('<path d="',end='')
 		f="M"
+		xs=list()
+		ys=list()
 		for x,y in points:
+			xs.append(x)
+			ys.append(y)
 			prt(f,end='')
 			prt("%.2f"%(x*scale),"%.2f"%(y*scale),end=' ')
 			f="L"
-		
+		dx=max(xs)-min(xs)
+		dy=max(ys)-min(ys)
+		if(loop_trim and (dx/(dy+0.1)>10 or dy/(dx+0.1)>10)):
+			continue
 		if(loop_stroke):
 			prt('Z" fill="RGB%s" stroke="RGB(%d,%d,%d,70%%)" stroke-width="%.1f" />'%(c,*c[:3],loop_stroke_width*scale))
 		else:
@@ -86,21 +93,24 @@ dxy8=[(dx8[i],dy8[i]) for i in range(8)]
 dx4=[0,0,1,-1]
 dy4=[1,-1,0,0]
 dxy4=[(dx4[i],dy4[i]) for i in range(4)]
-def kmeans_with_kdt(k,points,n_iter=3,wei=None):
+def kmeans_with_kdt(k,points,n_iter=3,wei=None,progress_cb=None):
 	import kdt
 	def convert(p):
 		if(isinstance(p,point)):
 			return kdt.point(p.xy)
 		else:
 			return kdt.point(p)
+	n=len(points)
 	rets=random.sample(points,k)
 	for iter in range(n_iter):
-		print('ln98',len(rets))
+		#print('ln98',len(rets))
 		K=kdt.kdt()
 		K.build([convert(_) for _ in rets])
 		cnt=dict()
 		sum=dict()
 		for idx,i in enumerate(points):
+			if(progress_cb):
+				progress_cb((iter*n+idx)/n/n_iter)
 			nn=K.ann1(convert(i))
 			if(wei is None):
 				cnt[nn]=cnt.get(nn,0)+1
@@ -114,7 +124,7 @@ def kmeans_with_kdt(k,points,n_iter=3,wei=None):
 		if(len(rets)<k):
 			rets.extend(random.sample(points,k-len(rets)))
 	return rets
-def img2loops1(img,ss=4e5,n_colors=64,sample_color=None,n_points=None,merge_samecolor_tri=False,debug=True,merge_thresh=6,point_cut_method='kmeans',ensure_corner=True,smooth_points=3):
+def img2loops1(img,ss=4e5,n_colors=64,sample_color=None,n_points=None,merge_samecolor_tri=False,debug=True,merge_thresh=6,point_cut_method='kmeans',ensure_corner=True,smooth_points=3,print_progress=True):
 	w,h=img.size
 	rate=(ss/w/h)**0.5
 	sample_w,sample_h=int(w*rate),int(h*rate)
@@ -122,10 +132,30 @@ def img2loops1(img,ss=4e5,n_colors=64,sample_color=None,n_points=None,merge_same
 	if(sample_color is None):
 		sample_color=int((n_colors*ss)**0.5)
 	colors=set()
+	import time
+	last_prog=time.time()
+	i_prog=0
+	first_prog=dict()
+	def progbar(title,prog,width=20):
+		nonlocal i_prog,last_prog
+		i_prog+=1
+		if(i_prog&0b111):
+			return
+		t=time.time()
+		if(title not in first_prog):
+			first_prog[title]=t
+		if(t-last_prog>0.1):
+			enmiao="#"*int(prog*width)
+			enmiao+="."*max(width-len(enmiao),0)
+			remain=(t-first_prog[title])/(prog+1e-10)*(1-prog)
+			print(title,"["+enmiao+"] %.1f seconds remain"%(remain),end='\r')
+			last_prog=t
 	if(debug):
 		import time
 		start_time=time.time()
 	for i in range(sample_color):
+		if(print_progress):
+			progbar("sampling color",i/sample_color)
 		x=random.randrange(w)
 		y=random.randrange(h)
 		c=img.getpixel((x,y))
@@ -135,6 +165,7 @@ def img2loops1(img,ss=4e5,n_colors=64,sample_color=None,n_points=None,merge_same
 		
 	colors=list(colors)
 	colors=kmeans_with_weights(n_colors,colors,[1 for i in colors],n_iter=4)
+	
 	colors=[npa2tuple_color(i) for i in colors]
 	def nearest(colors,c):
 		ret=None
@@ -156,6 +187,8 @@ def img2loops1(img,ss=4e5,n_colors=64,sample_color=None,n_points=None,merge_same
 		print('color kmeans use %.1f seconds'%t)
 	
 	for xy in wh_iter(sample_w,sample_h):
+		if(print_progress):
+			progbar("cut down color",(y*sample_w+x)/sample_w/sample_h)
 		c=simg.getpixel(xy)
 		c=KDT.ann1(kdt.point(c)).arr
 		simg.putpixel(xy,c)
@@ -169,6 +202,8 @@ def img2loops1(img,ss=4e5,n_colors=64,sample_color=None,n_points=None,merge_same
 	p_diff=[]
 	for xy in wh_iter(sample_w-1,sample_h-1):
 		x,y=xy
+		if(print_progress):
+			progbar("detect border",(y*(sample_w-1)+x)/(sample_w-1)/(sample_h-1))
 		c=simg.getpixel(xy)
 		c1=simg.getpixel((x+1,y))
 		c2=simg.getpixel((x,y+1))
@@ -202,6 +237,8 @@ def img2loops1(img,ss=4e5,n_colors=64,sample_color=None,n_points=None,merge_same
 		elif(point_cut_method=='sort'):
 			az=[]
 			for idx,p in enumerate(points):
+				if(print_progress):
+					progbar("cut down points",idx/len(points))
 				import heapq
 				heapq.heappush(az,(p_diff[idx],random.random(),p))
 				if(len(az)>int(n_points*0.9)):
@@ -210,8 +247,11 @@ def img2loops1(img,ss=4e5,n_colors=64,sample_color=None,n_points=None,merge_same
 			points=[_[-1] for _ in az]+random.sample(points,n_points-len(az))
 			points=list(set(points))
 		elif(point_cut_method=='kmeans'):
-			
-			points=kmeans_with_kdt(n_points,points,n_iter=4,wei=[i**2 for i in p_diff])
+			if(print_progress):
+				cb=lambda prog:progbar("cut down points",prog)
+			else:
+				cb=None
+			points=kmeans_with_kdt(n_points,points,n_iter=4,wei=[i**8 for i in p_diff],progress_cb=cb)
 			#points=kmeans_with_kdt(n_points,points,n_iter=4)
 			#points=[point(int(p.x),int(p.y)) for p in points]
 		if(debug):
@@ -226,9 +266,13 @@ def img2loops1(img,ss=4e5,n_colors=64,sample_color=None,n_points=None,merge_same
 	
 	enmiao=1e2
 	points=list(set([point(int(p.x*enmiao),int(p.y*enmiao)) for p in points]))
-	print('%d points',len(points))
+	print('%d points'%len(points))
 	points=[point(p.x/enmiao,p.y/enmiao) for p in points]
-	M=mesh.delaunay(points)
+	if(print_progress):
+		cb=lambda prog:progbar("delaunay",prog)
+	else:
+		cb=None
+	M=mesh.delaunay(points,prog_cb=cb)
 	'''if(smooth_points):
 		l=list(M.neibours)
 		random.shuffle(l)
@@ -369,16 +413,19 @@ def img2loops(img,n_points=int(3e4),sample_points=None,sample_ss=1e6,ensure_corn
 		loops.append((1,[A.xy,B.xy,C.xy],color))
 	return loops
 if(__name__=='__main__'):
-	im=Image.open(r"M:\Weiyun Sync\code\nsfw_keras\datas\pos\%C5XR8RFQ9V[5~2RZ_NM@}Y.png").convert("RGB")
-	import time
-	tm=time.time()
-	loops=img2loops1(im)
-	tm=time.time()-tm
-	print("%.1f seconds"%tm)
-	ww=1280
-	hh=720
-	w,h=im.size
-	s=ldl2svg(loops,[],[],scale=min(ww/w,hh/h))
-	from os import path
-	with open(path.join(path.dirname(__file__),'sample.svg'),"w") as f:
-		f.write(s)
+	for method in ['kmeans','sort']:
+		im=Image.open(r"C:\Users\xiaofan\AppData\Roaming\Typora\themes\autumnus-assets\3qUeXmrLdczVxhf.jpg").convert("RGB")
+		import time
+		tm=time.time()
+		loops=img2loops1(im,point_cut_method=method)
+		tm=time.time()-tm
+		
+		ww=1280
+		hh=720
+		w,h=im.size
+		s=ldl2svg(loops,[],[],scale=min(ww/w,hh/h))
+		from os import path
+		with open(path.join(path.dirname(__file__),'sample_method=%s.svg'%method),"w") as f:
+			f.write(s)
+		performance=len(loops)/tm
+		print("===[method=%s,\ttime=%d seconds,\tperformance=%d loop/sec]==="%(method,tm,performance))
