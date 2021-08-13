@@ -315,7 +315,7 @@ if(__name__=='__main__'):
 	w,h=im.size
 	s=ldl2svg(loops,[],[],scale=min(ww/w,hh/h))
 	from os import path
-	with open(path.join(path.dirname(__file__),'sample_method=main3_loops=%d.svg'%len(loops)),"w") as f:
+	with open(path.join(path.dirname(__file__),'sample_loops=%d_method=main3.svg'%len(loops)),"w") as f:
 		f.write(s)
 	performance=len(loops)/tm
 	print("===[time=%d seconds,\tperformance=%d loop/sec]==="%(tm,performance))
