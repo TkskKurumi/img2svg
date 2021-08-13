@@ -44,8 +44,8 @@ def ldl2svg(loops,dots,lines,smooth=1.7,blur_dots=1.2,scale=3,cutdown_dots=10000
 		ys=[y for x,y in points]
 		dx=max(xs)-min(xs)
 		dy=max(ys)-min(ys)
-		if(loop_trim and (dx/(dy+0.1)>100 or dy/(dx+0.1)>100)):
-			if(dx<2 and dy<2):
+		if(loop_trim and (dx/(dy+0.1)>70 or dy/(dx+0.1)>70)):
+			if(dx<stroke_width and dy<stroke_width):
 				continue
 		
 		points=smooth_points(points,smooth)
@@ -374,8 +374,8 @@ if(__name__=='__main__'):
 		loops=img2loops(im,point_cut_method=method)
 		tm=time.time()-tm
 		
-		ww=1280
-		hh=720
+		ww=1080
+		hh=1920
 		w,h=im.size
 		s=ldl2svg(loops,[],[],scale=min(ww/w,hh/h))
 		from os import path
