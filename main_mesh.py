@@ -192,7 +192,7 @@ def img2loops(img,ss=1e5,n_colors=64,sample_color=None,n_points=None,merge_samec
 	for xy in wh_iter(sample_w,sample_h):
 		x,y=xy
 		if(print_progress):
-			progbar("cut down color",(y*sample_w+x)/sample_w/sample_h)
+			progbar("merge color",(y*sample_w+x)/sample_w/sample_h)
 		c=simg.getpixel(xy)
 		c=KDT.ann1(kdt.point(c)).arr
 		simg.putpixel(xy,c)
