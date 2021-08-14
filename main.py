@@ -18,8 +18,9 @@ print(dxy4,dxy8)
 def npa2tuple_color(arr):
 	return tuple([int(i) for i in arr])
 def img2ldl(im,thresh=8,force_group=True,debug=False):
-	color_groups=disjointset()
 	
+	
+	color_groups=disjointset()
 	w,h=im.size
 	group_color=dict()
 	group_pixeln=dict()
@@ -288,7 +289,7 @@ if(__name__=='__main__'):
 	secs=30
 	speed=13000
 	for ss in (speed*secs,):
-		im=Image.open(r"C:\Users\xiaofan\AppData\Roaming\Typora\themes\autumnus-assets\WPxSwEYVtfm6Ba1.png")
+		im=Image.open(r"D:\img2svg\QQ截图20210814002508.png")
 		w,h=im.size
 		rate=(ss/w/h)**0.5
 		

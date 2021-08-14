@@ -5,6 +5,7 @@ class point:
 	def __init__(self,arr):
 		self.arr=arr
 		self.hash=None
+		self.id=None
 	def dist(self,other):
 		ret=0
 		for idx,i in enumerate(self.arr):
@@ -78,7 +79,11 @@ class kdt:
 			self.root=len(self.node_points)-1
 		self.size=len(self.node_points)
 		return self.size-1
-	def build(self,points,stop_num=3,select_point='random',depth=0,stop_depth=40):
+	def build(self,points,stop_num=3,select_point='random',depth=0,stop_depth=20,set_id=True):
+		if(set_id):
+			for id,i in enumerate(points):
+				i.id=id
+		
 		u=self._new_index()
 		if(len(points)<=stop_num or depth>stop_depth):
 			self.node_points[u]=points
@@ -94,8 +99,8 @@ class kdt:
 				rpoints.append(p)
 		self.left_point[u]=lpoint
 		self.right_point[u]=rpoint
-		self.left_child[u]=self.build(lpoints,select_point=select_point,stop_num=stop_num,depth=depth+1)
-		self.right_child[u]=self.build(rpoints,select_point=select_point,stop_num=stop_num,depth=depth+1)
+		self.left_child[u]=self.build(lpoints,select_point=select_point,stop_num=stop_num,depth=depth+1,set_id=False)
+		self.right_child[u]=self.build(rpoints,select_point=select_point,stop_num=stop_num,depth=depth+1,set_id=False)
 		return u
 	def ann1(self,p,u=None):
 		if(u is None):

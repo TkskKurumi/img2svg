@@ -24,7 +24,7 @@ def smooth_points(points,step=2.4,start=0,end=None):
 	if(len(ret)<10):
 		return points
 	return ret
-def ldl2svg(loops,dots,lines,smooth=1.7,blur_dots=1.2,scale=3,cutdown_dots=10000,line_alpha=0.5,loop_stroke=True,loop_stroke_width=0.5,loop_trim=True):
+def ldl2svg(loops,dots,lines,smooth=1.7,blur_dots=1.2,scale=3,cutdown_dots=10000,line_alpha=0.5,loop_stroke=True,loop_stroke_width=0.1,loop_trim=True):
 	out=""
 	def prt(*args,end='\n'):
 		nonlocal out
@@ -136,9 +136,9 @@ def kmeans_with_kdt(k,points,n_iter=3,wei=None,progress_cb=None):
 def img2loops(img,ss=1e4,n_points=None,n_colors=64,print_progress=True,ensure_corner=True,debug=False):
 	import time
 	last_prog=time.time()
+	last_title=""
 	i_prog=0
 	first_prog=dict()
-	
 	def prog_cb(title):
 		if(print_progress):
 			def inner(prog,title=title):
@@ -146,12 +146,18 @@ def img2loops(img,ss=1e4,n_points=None,n_colors=64,print_progress=True,ensure_co
 			return inner
 		else:
 			return None
-	def progbar(title,prog,width=20):
-		nonlocal i_prog,last_prog
+	def progbar(title,prog,width=20,print_finish=False):
+		nonlocal i_prog,last_prog,last_title
+		if(print_finish):
+			t=time.time()
+			print("%s finished in %.1f seconds  "%(last_title,t-first_prog[last_title]))
 		i_prog+=1
 		if(i_prog&0b111):
 			return
 		t=time.time()
+		if((title!=last_title) and (last_title in first_prog)):
+			print("%s finished in %.1f seconds  "%(last_title,t-first_prog[last_title]))
+		last_title=title
 		if(title not in first_prog):
 			first_prog[title]=t
 		if(t-last_prog>0.1):
@@ -184,16 +190,24 @@ def img2loops(img,ss=1e4,n_points=None,n_colors=64,print_progress=True,ensure_co
 		for idx,i in enumerate(K.node_points[u]):
 			
 			K.node_points[u][idx].arr=tuple([int(j) for j in i.arr])
+	simg_arr=np.zeros((sample_w,sample_h),np.uint32)
+	id2c=dict()
 	for xy in wh_iter(sample_w,sample_h):
 		x,y=xy
 		if(print_progress):
 			progbar("simplify image",(y*sample_w+x)/sample_w/sample_h)
 		c=simg.getpixel(xy)
-		c=K.ann1(kdt.point(c)).arr
+		id=K.ann1(kdt.point(c)).id
 		#c=npa2tuple_color(c)
-		simg.putpixel(xy,c)
+		id2c[id]=c
+		simg_arr[x,y]=id
 	if(debug):
-		#simg.show()
+		
+		for xy in wh_iter(sample_w,sample_h):
+			progbar("ln206",(y*sample_w+x)/sample_w/sample_h)
+			x,y=xy
+			simg.putpixel(xy,id2c[simg_arr[x,y]])
+		simg.show()
 		pass
 	pixel_group=DJS()
 	pixel_wei=dict()
@@ -208,7 +222,7 @@ def img2loops(img,ss=1e4,n_points=None,n_colors=64,print_progress=True,ensure_co
 			x1,y1=x+dx,y+dy
 			c1=simg.getpixel((x1,y1))
 			
-			if(c==c1):
+			if(simg_arr[x,y]==simg_arr[x1,y1]):
 				pixel_group.join(xy,(x1,y1))
 				pixel_group.find(xy)
 				pixel_group.find((x1,y1))
@@ -216,11 +230,12 @@ def img2loops(img,ss=1e4,n_points=None,n_colors=64,print_progress=True,ensure_co
 				all_edges.add(xy)
 				all_edges.add((x1,y1))
 			pixel_wei[xy]+=colordis(c,c1)
+	
 	group_area=dict()	
 	for xy in wh_iter(sample_w,sample_h):
 		g=pixel_group.find(xy)
 		group_area[g]=group_area.get(g,0)+1
-		
+	
 	group_edges=dict()
 	for idx,xy in enumerate(all_edges):
 		if(print_progress):
@@ -229,11 +244,26 @@ def img2loops(img,ss=1e4,n_points=None,n_colors=64,print_progress=True,ensure_co
 		if(g not in group_edges):
 			group_edges[g]=list()
 		group_edges[g].append(xy)
+	if(debug):
+		az=Image.new("RGB",simg.size)
+		tmp=dict()
+		from PIL import ImageColor
+		aaa=list(group_edges)
+		random.shuffle(aaa)
+		for idx,i in enumerate(aaa):
+			H=idx*360/len(group_edges)
+			c=ImageColor.getrgb("HSV(%d,100%%,100%%)"%H)
+			tmp[i]=c
+		for xy in wh_iter(*az.size):
+			g=pixel_group.find(xy)
+			c=tmp.get(g,(0,0,0))
+			az.putpixel(xy,c)
+		az.show()
 	if(n_points is None):
 		n_points=0
 		for i in group_edges:
 			n_points+=group_area[i]**0.5
-		n_points=int(n_points*0.4)
+		n_points=int(max(n_points*0.5,len(group_edges)*1.5))
 	now_points=sum([len(group_edges[i]) for i in group_edges])
 	_prog=0
 	rate=n_points/now_points
@@ -251,8 +281,8 @@ def img2loops(img,ss=1e4,n_points=None,n_colors=64,print_progress=True,ensure_co
 		k=int(rate*le)
 		if(k<le and k):
 			#print("ln239")
-			wei=[pixel_wei.get(xy,1)**5 for xy in edges]
-			_points=kmeans_with_kdt(k,_points,wei=wei,n_iter=6)
+			#wei=[pixel_wei.get(xy,1)**5 for xy in edges]
+			_points=kmeans_with_kdt(k,_points,n_iter=6)
 			if(len(_points)>k):
 				print("wtf")
 				exit()
@@ -272,9 +302,11 @@ def img2loops(img,ss=1e4,n_points=None,n_colors=64,print_progress=True,ensure_co
 				points.append(point(x,y))
 	enmiao=1e2
 	points=list(set([point(int(p.x*enmiao),int(p.y*enmiao)) for p in points]))
-	print('%d points'%len(points))
+	print('%d points  '%len(points))
 	points=[point(p.x/enmiao,p.y/enmiao) for p in points]
 	M=mesh.delaunay(points,prog_cb=prog_cb('delaunay'))
+	if(print_progress):
+		progbar('','',print_finish=True)
 	mx=max([i.x for i in points])
 	
 	loops=[]
@@ -311,7 +343,7 @@ if(__name__=='__main__'):
 		im=Image.open(random.choice(ims)).convert("RGB")
 	import time
 	tm=time.time()
-	loops=img2loops(im,n_colors=24,ss=3e5,debug=True)
+	loops=img2loops(im,n_colors=32,ss=2e5,debug=True)
 	tm=time.time()-tm
 	
 	ww=1600
