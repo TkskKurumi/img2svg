@@ -25,10 +25,27 @@ def smooth_points(points,*args,**kwargs):
 	integ=point(0,0)
 	now=_points[0]
 	__points=[]
+	last_delta=point(0,0)
 	for i in _points:
 		delta=i-now
-		integ+=delta*0.1
-		now+=delta*0.4+integ
+		deriv=delta-last_delta
+		last_delta=delta
+		integ+=delta*0.1+deriv*0.1
+		
+		if(integ.distO()>5):
+			#print('ln36')
+			integ=integ*4/integ.distO()
+		d=integ*delta
+		
+		if(integ.distO()<1e-6 or delta.distO()<1e-6):
+			d=0.5
+		else:
+			d=d/integ.distO()/delta.distO()
+			d=(1-d)/2
+		a=1-d
+		#integ*=(d+2)/3
+		
+		now+=delta*(a+0.4)/3+integ*(d+1)/2+deriv*0.1
 		__points.append(now.xy)
 	return __points
 '''
