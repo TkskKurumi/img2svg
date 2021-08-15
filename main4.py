@@ -454,7 +454,7 @@ if(__name__=='__main__'):
 	
 	import platform
 	
-	perf={"AMD64":7670,'aarch64':2333}.get(platform.machine(),4000)
+	perf={"AMD64":7670,'aarch64':6000}.get(platform.machine(),4000)
 	quality=int(args.get("q",None) or args.get("quality",None) or 15)
 	ss=quality*perf
 	loops,dots,lines=img2ldl(im,n_colors=48,ss=ss,debug=False)
