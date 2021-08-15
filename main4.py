@@ -102,7 +102,7 @@ def kmeans_with_kdt(k,points,n_iter=3,wei=None,progress_cb=None):
 		if(len(rets)<k):
 			rets.extend(random.sample(points,k-len(rets)))
 	return rets
-def img2ldl(im,ss=1e5,n_colors=32,debug=False,print_progress=True,back_delaunay=100):
+def img2ldl(im,ss=1e5,n_colors=32,debug=False,print_progress=True,back_delaunay=None):
 	import time
 	last_prog=time.time()
 	last_title=""
@@ -339,6 +339,8 @@ def img2ldl(im,ss=1e5,n_colors=32,debug=False,print_progress=True,back_delaunay=
 		im_pixtype.show()
 		print(areas,ss)
 	delaunay_loops=[]
+	if(back_delaunay is None):
+		back_delaunay=min(int((ss**0.5)*2),ss/100)
 	if(back_delaunay):
 		delaunay_pts=[]
 		for xy in random.sample(xys,back_delaunay-4):
@@ -454,7 +456,7 @@ if(__name__=='__main__'):
 	
 	import platform
 	
-	perf={"AMD64":7670,'aarch64':6000}.get(platform.machine(),4000)
+	perf={"AMD64":7670,'aarch64':6800}.get(platform.machine(),4000)
 	quality=int(args.get("q",None) or args.get("quality",None) or 15)
 	ss=quality*perf
 	loops,dots,lines=img2ldl(im,n_colors=48,ss=ss,debug=False)
