@@ -30,11 +30,11 @@ def smooth_points(points,*args,**kwargs):
 		delta=i-now
 		deriv=delta-last_delta
 		last_delta=delta
-		integ+=delta*0.1+deriv*0.1
+		integ+=(delta*0.1+deriv*0.1)/2
 		
-		if(integ.distO()>5):
+		'''if(integ.distO()>5):
 			#print('ln36')
-			integ=integ*4/integ.distO()
+			integ=integ*4/integ.distO()'''
 		d=integ*delta
 		
 		if(integ.distO()<1e-6 or delta.distO()<1e-6):
@@ -45,7 +45,7 @@ def smooth_points(points,*args,**kwargs):
 		a=1-d
 		#integ*=(d+2)/3
 		
-		now+=delta*(a+0.4)/3+integ*(d+1)/2+deriv*0.1
+		now+=delta*(a+0.5)/5+integ*(d+1)/2+deriv*0.1
 		__points.append(now.xy)
 	return __points
 '''
@@ -242,7 +242,7 @@ def img2ldl(im,ss=1e5,n_colors=32,debug=False,print_progress=True,back_delaunay=
 		im_pixtype=Image.new("RGB",sim.size)
 		areas=0
 		print("len group_graph",len(group_graph))
-		
+	dots=[]
 	for i in group_graph:
 		graphs=group_graph[i].seperate_by_connectivity()
 		#largest=None
@@ -283,9 +283,11 @@ def img2ldl(im,ss=1e5,n_colors=32,debug=False,print_progress=True,back_delaunay=
 		from math import ceil
 		
 		_loops=_loops[:ceil(le**0.5)]
+		do_lines=True
 		if(_loops):		#loop
 			#area,loop=largest
 			#areas+=area
+			do_lines=False
 			loops.extend(_loops)
 			#loops.append((area,[upscale(_) for _ in loop],))
 			if(debug):
@@ -293,6 +295,7 @@ def img2ldl(im,ss=1e5,n_colors=32,debug=False,print_progress=True,back_delaunay=
 					im_pixtype.putpixel(xy,(255,0,0))
 				for xy in loop:
 					im_pixtype.putpixel(xy,(0,0,255))
+		
 		else:						   #lines
 			_lines=[]
 			_len=0
@@ -304,12 +307,13 @@ def img2ldl(im,ss=1e5,n_colors=32,debug=False,print_progress=True,back_delaunay=
 					longest=pth'''
 				
 				if(len(pth)>1):
-					#lines.append(([upscale(_) for _ in pth],c))
-					pass
+					lines.append(([upscale(_) for _ in pth],c))
+				else:
+					dots.append((upscale[pth[0]],c,1))
 			if(debug):
 				for xy in group_pixels[i]:
 					im_pixtype.putpixel(xy,(0,255,0))
-	if(False and debug):
+	if(debug):
 		
 		im_pixtype.show()
 		dr=ImageDraw.Draw(im_pixtype)
@@ -366,8 +370,8 @@ def img2ldl(im,ss=1e5,n_colors=32,debug=False,print_progress=True,back_delaunay=
 			delaunay_loops.append((1,[upscale(A).xy,upscale(B).xy,upscale(C).xy],color))
 	if(print_progress):
 		progbar('',0,print_finish=True)
-	return delaunay_loops+sorted(loops,key=lambda x:-x[0]),[],lines
-def ldl2svg(loops,dots,lines,smooth=4,blur_dots=1.2,scale=3,cutdown_dots=10000,line_alpha=0.5,loop_stroke=False,loop_stroke_width=1.2,loop_trim=False):
+	return delaunay_loops+sorted(loops,key=lambda x:-x[0]),dots,lines
+def ldl2svg(loops,dots,lines,smooth=4,blur_dots=1.2,scale=3,cutdown_dots=10000,line_alpha=0.3,loop_stroke=True,loop_stroke_width=1.2,loop_trim=False):
 	out=""
 	def prt(*args,end='\n'):
 		nonlocal out
@@ -419,7 +423,7 @@ def ldl2svg(loops,dots,lines,smooth=4,blur_dots=1.2,scale=3,cutdown_dots=10000,l
 			prt(f,end='')
 			prt("%.2f"%(x*scale),"%.2f"%(y*scale),end=' ')
 			f="L"
-		prt('Z" stroke="RGBA(%d,%d,%d,%.1f%%)" fill="none" stroke-width="%.1f" />'%(*c[:3],100*line_alpha,1.5*scale))
+		prt('" stroke="RGBA(%d,%d,%d,%.1f%%)" fill="none" stroke-width="%.1f" />'%(*c[:3],100*line_alpha,1.5*scale))
 	for line in lines:
 		points,c=line
 		points=smooth_points(points,smooth)
@@ -429,11 +433,14 @@ def ldl2svg(loops,dots,lines,smooth=4,blur_dots=1.2,scale=3,cutdown_dots=10000,l
 			prt(f,end='')
 			prt("%.2f"%(x*scale),"%.2f"%(y*scale),end=' ')
 			f="L"
-		prt('Z" stroke="RGBA(%d,%d,%d,%d)" fill="none" stroke-width="%.1f" />'%(*c[:3],50*line_alpha,3*scale))
+		prt('" stroke="RGBA(%d,%d,%d,%.1f%%)" fill="none" stroke-width="%.1f" />'%(*c[:3],50*line_alpha,3*scale))
 	
 	prt("</svg>",end='')
 	return out
 if(__name__=='__main__'):
+	import sys,simple_arg_parser
+	args=" ".join(sys.argv[1:])
+	args=simple_arg_parser.parse_args(args)
 	from glob import glob
 	from os import path
 	import random
@@ -444,7 +451,14 @@ if(__name__=='__main__'):
 		im=Image.open(random.choice(ims)).convert("RGB")
 	import time
 	tm=time.time()
-	loops,dots,lines=img2ldl(im,n_colors=64,ss=5e5,debug=True)
+	
+	import platform
+	
+	perf={"AMD64":7670,'aarch64':2333}.get(platform.machine(),4000)
+	quality=int(args.get("q",None) or args.get("quality",None) or 15)
+	ss=quality*perf
+	loops,dots,lines=img2ldl(im,n_colors=48,ss=ss,debug=False)
+	
 	print(len(loops),'loops')
 	print(len(dots),'dots')
 	print(len(lines),'lines')
@@ -457,8 +471,8 @@ if(__name__=='__main__'):
 	from os import path
 	with open(path.join(path.dirname(__file__),'sample_loops=%d_method=main4.svg'%len(loops)),"w") as f:
 		f.write(s)
-	performance=len(loops)/tm
-	print("===[time=%d seconds,\tperformance=%d loop/sec]==="%(tm,performance))
+	performance=ss/tm
+	print("===[time=%d seconds,\tperformance=%d pixels/sec]==="%(tm,performance))
 	'''im2=Image.new("RGB",(1600,900))
 	dr=ImageDraw.Draw(im2)
 	for loop in loops:
