@@ -466,7 +466,7 @@ if(__name__=='__main__'):
 	perf={"AMD64":7670,'aarch64':6800}.get(platform.machine(),4000)
 	quality=int(args.get("q",None) or args.get("quality",None) or 15)
 	ss=quality*perf
-	n_colors=int((quality**0.5)*8)
+	n_colors=int((quality**0.5)*6)
 	loops,dots,lines=img2ldl(im,n_colors=n_colors,ss=ss,debug=False)
 	
 	print(len(loops),'loops')
