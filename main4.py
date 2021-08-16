@@ -18,7 +18,23 @@ dxy3=[(1,0),(0,1),(1,1)]
 print(dxy4,dxy8)
 def npa2tuple_color(arr):
 	return tuple([int(i) for i in arr])
-def smooth_points(points,*args,**kwargs):
+def smooth_points_linear_cutdown(points,step=2.4,start=0,end=None):
+	if(end is None):
+		end=len(points)
+	
+	ret=[]
+	while(start<end):
+		lower=int(start)
+		az=start-lower
+		pl=point(points[lower])
+		pu=point(points[(lower+1)%len(points)])
+		p=pu*az+pl*(1-az)
+		ret.append(p.xy)
+		start+=step
+	if(len(ret)<10):
+		return points
+	return ret
+def smooth_points_momentum(points,*args,**kwargs):
 	if(len(points)<5):
 		return points
 	_points=[point(x,y) for x,y in points]
@@ -43,28 +59,17 @@ def smooth_points(points,*args,**kwargs):
 			d=d/integ.distO()/delta.distO()
 			d=(1-d)/2
 		a=1-d
-		#integ*=(d+2)/3
+		if(d<0.3):
+			integ*=d+0.7
 		
-		now+=delta*(a+0.5)/5+integ*(d+1)/2+deriv*0.1
+		now+=delta*(a+0.5)/4+integ*(d+1)/2+deriv*0.1
 		__points.append(now.xy)
 	return __points
-'''
-def smooth_points(points,step=2.4,start=0,end=None):
-	if(end is None):
-		end=len(points)
-	
-	ret=[]
-	while(start<end):
-		lower=int(start)
-		az=start-lower
-		pl=point(points[lower])
-		pu=point(points[(lower+1)%len(points)])
-		p=pu*az+pl*(1-az)
-		ret.append(p.xy)
-		start+=step
-	if(len(ret)<10):
-		return points
-	return ret'''
+def smooth_points(points):
+	points=smooth_points_linear_cutdown(points,1.5)
+	points=smooth_points_momentum(points)
+	return points
+
 def kmeans_with_kdt(k,points,n_iter=3,wei=None,progress_cb=None):
 	import kdt
 	def convert(p):
@@ -368,11 +373,13 @@ def img2ldl(im,ss=1e5,n_colors=32,debug=False,print_progress=True,back_delaunay=
 					color+=np.array(get(x*w/sw,y*h/sh),np.float32)
 				color=npa2tuple_color(color/len(_pts))
 			
-			
-			delaunay_loops.append((1,[upscale(A).xy,upscale(B).xy,upscale(C).xy],color))
+			loop=[upscale(A).xy,upscale(B).xy,upscale(C).xy]
+			area=(polygon_area([point(i) for i in loop])*ss)**0.5
+			delaunay_loops.append((area,loop,color))
 	if(print_progress):
 		progbar('',0,print_finish=True)
-	return delaunay_loops+sorted(loops,key=lambda x:-x[0]),dots,lines
+	loops.extend(delaunay_loops)
+	return sorted(loops,key=lambda x:-x[0]),dots,lines
 def ldl2svg(loops,dots,lines,smooth=4,blur_dots=1.2,scale=3,cutdown_dots=10000,line_alpha=0.3,loop_stroke=True,loop_stroke_width=1.2,loop_trim=False):
 	out=""
 	def prt(*args,end='\n'):
@@ -459,7 +466,7 @@ if(__name__=='__main__'):
 	perf={"AMD64":7670,'aarch64':6800}.get(platform.machine(),4000)
 	quality=int(args.get("q",None) or args.get("quality",None) or 15)
 	ss=quality*perf
-	loops,dots,lines=img2ldl(im,n_colors=48,ss=ss,debug=False)
+	loops,dots,lines=img2ldl(im,n_colors=64,ss=ss,debug=False)
 	
 	print(len(loops),'loops')
 	print(len(dots),'dots')

@@ -8,6 +8,7 @@ class point:
 		self.id=None
 	def dist(self,other):
 		ret=0
+		
 		for idx,i in enumerate(self.arr):
 			try:
 				ret+=(i-other.arr[idx])*(i-other.arr[idx])
