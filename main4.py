@@ -65,8 +65,8 @@ def smooth_points_momentum(points,*args,**kwargs):
 		now+=delta*(a+0.5)/4+integ*(d+1)/2+deriv*0.1
 		__points.append(now.xy)
 	return __points
-def smooth_points(points):
-	points=smooth_points_linear_cutdown(points,1.5)
+def smooth_points(points,smooth=1.5):
+	points=smooth_points_linear_cutdown(points,smooth)
 	points=smooth_points_momentum(points)
 	return points
 
@@ -466,7 +466,8 @@ if(__name__=='__main__'):
 	perf={"AMD64":7670,'aarch64':6800}.get(platform.machine(),4000)
 	quality=int(args.get("q",None) or args.get("quality",None) or 15)
 	ss=quality*perf
-	loops,dots,lines=img2ldl(im,n_colors=64,ss=ss,debug=False)
+	n_colors=int((quality**0.5)*8)
+	loops,dots,lines=img2ldl(im,n_colors=n_colors,ss=ss,debug=False)
 	
 	print(len(loops),'loops')
 	print(len(dots),'dots')
