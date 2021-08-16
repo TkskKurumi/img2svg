@@ -15,7 +15,7 @@ class point:
 			except Exception as e:
 				print(type(other),str(other)[:20])
 				raise e
-		return ret
+		return ret**0.5
 	
 	def __str__(self):
 		return str(self.arr)
