@@ -10,12 +10,8 @@ class point:
 		ret=0
 		
 		for idx,i in enumerate(self.arr):
-			try:
-				ret+=(i-other.arr[idx])*(i-other.arr[idx])
-			except Exception as e:
-				print(type(other),str(other)[:20])
-				raise e
-		return ret**0.5
+			ret+=(i-other.arr[idx])**2
+		return ret
 	
 	def __str__(self):
 		return str(self.arr)

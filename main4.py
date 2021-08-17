@@ -160,13 +160,15 @@ def img2ldl(im,ss=1e5,n_colors=32,debug=False,print_progress=True,back_delaunay=
 	
 	import kdt
 	K=kdt.kdt()
-	K.build([kdt.point(c) for c in colors])
+	K.build([kdt.point(c) for c in colors],stop_num=3)
 	sim_arr=np.zeros(sim.size,np.uint32)
+	#_sim_arr=np.asarray(sim).swapaxes(0,1)
 	if(debug):id2c=dict()
 	for xy in xys:
 		if(print_progress):progbar("simplify image",calc_xy_prog(*xy,sw,sh))
 		x,y=xy
 		c=sim.getpixel(xy)
+		#c=_sim_arr[x,y]
 		nn=K.ann1(kdt.point(c))
 		sim_arr[x,y]=nn.id
 		if(debug):id2c[nn.id]=c
