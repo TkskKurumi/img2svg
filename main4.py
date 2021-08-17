@@ -312,12 +312,23 @@ def img2ldl(im,ss=1e5,n_colors=32,debug=False,print_progress=True,back_delaunay=
 					longest=pth'''
 				
 				if(len(pth)>1):
-					lines.append(([upscale(_) for _ in pth],c))
-				else:
-					dots.append((upscale[pth[0]],c,1))
-			if(debug):
-				for xy in group_pixels[i]:
-					im_pixtype.putpixel(xy,(0,255,0))
+					_lines.append(([upscale(_) for _ in pth],c))
+			if(_lines):
+				lines.extend(_lines)
+			else:
+				#add dot
+				xs,ys=0,0
+				for x,y in group_pixels[i]:
+					xs+=x
+					ys+=y
+				xs/=group_pixeln[i]
+				ys/=group_pixeln[i]
+				rad=0
+				for x,y in group_pixels[i]:
+					_rad=(x-xs)**2+(y-ys)**2
+					rad=max(rad,_rad)
+				dots.append((upscale((xs,ys)),c,rad))
+				pass
 	if(debug):
 		
 		im_pixtype.show()
