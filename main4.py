@@ -485,7 +485,7 @@ if(__name__=='__main__'):
 	quality=int(args.get("q",None) or args.get("quality",None) or 15)
 	perfj,perf=estimate_performance()
 	ss=quality*perf
-	n_colors=int((ss**0.5)/15)
+	n_colors=int((ss**0.5)/22)
 	print("ss=%d,n_colors=%d"%(ss,n_colors))
 	loops,dots,lines=img2ldl(im,n_colors=n_colors,ss=ss,debug=False)
 	
