@@ -488,7 +488,8 @@ if(__name__=='__main__'):
 	n_colors=int((ss**0.5)/22)
 	print("ss=%d,n_colors=%d"%(ss,n_colors))
 	loops,dots,lines=img2ldl(im,n_colors=n_colors,ss=ss,debug=False)
-	
+	if(args.get("no_lines",False) or args.get("nl",False)):
+		lines=[]
 	print(len(loops),'loops')
 	print(len(dots),'dots')
 	print(len(lines),'lines')

@@ -36,6 +36,9 @@ def parse_args(s,flag_start='-',default_flag='default'):
 				content+=i
 				ret[flag]=content
 		prev=i
+	if(in_flag):
+		in_flag=False
+		ret[flag]=True
 	return ret
 if(__name__=='__main__'):
-	print(parse_args(r'  千千 -suffix \"哒！\\ -u 402254524'))
+	print(parse_args(r'  千千 -suffix \"哒！\\ -u 402254524 -no_lines'))
