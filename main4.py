@@ -325,9 +325,10 @@ def img2ldl(im,ss=1e5,n_colors=32,debug=False,print_progress=True,back_delaunay=
 				ys/=group_pixeln[i]
 				rad=0
 				for x,y in group_pixels[i]:
-					_rad=(x-xs)**2+(y-ys)**2
+					_rad=(x-xs)**2+(y-ys)**2+1
 					rad=max(rad,_rad)
-				dots.append((upscale((xs,ys)),c,rad))
+					print(_rad)
+				dots.append((upscale((xs,ys)),c,rad/rate))
 				pass
 	if(debug):
 		
@@ -516,8 +517,8 @@ if(__name__=='__main__'):
 		f.write(s)
 	performance=ss/tm
 	print("===[time=%d seconds,\tperformance=%d pixels/sec]==="%(tm,performance))
-	perfj['time']=perfj.get('time',0)+tm
-	perfj['ss']=perfj.get('ss',0)+ss
+	perfj['time']=perfj.get('time',0)/2+tm
+	perfj['ss']=perfj.get('ss',0)/2+ss
 	import tempfile
 	pth=path.join(tempfile.gettempdir(),"img2svg_performance.json")
 	f=open(pth,'w')
