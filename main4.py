@@ -327,7 +327,7 @@ def img2ldl(im,ss=1e5,n_colors=32,debug=False,print_progress=True,back_delaunay=
 				for x,y in group_pixels[i]:
 					_rad=(x-xs)**2+(y-ys)**2+1
 					rad=max(rad,_rad)
-					print(_rad)
+					#print(_rad)
 				dots.append((upscale((xs,ys)),c,rad/rate))
 				pass
 	if(debug):
