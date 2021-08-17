@@ -446,6 +446,26 @@ def ldl2svg(loops,dots,lines,smooth=4,blur_dots=1.2,scale=3,cutdown_dots=10000,l
 	
 	prt("</svg>",end='')
 	return out
+def estimate_performance():
+	import platform
+	from os import path
+	import tempfile
+	pth=path.join(tempfile.gettempdir(),"img2svg_performance.json")
+	if(not path.exists(pth)):
+		j={}
+		perf={"AMD64":7670,'aarch64':6800}.get(platform.machine(),4000)
+	else:
+		try:
+			import json
+			f=open(pth,'r')
+			j=json.load(f)
+			f.close()
+			perf=j['ss']/j['time']
+		except Exception:
+			print("Cannot load recorded performance")
+			j={}
+			perf={"AMD64":7670,'aarch64':6800}.get(platform.machine(),4000)
+	return j,perf
 if(__name__=='__main__'):
 	import sys,simple_arg_parser
 	args=" ".join(sys.argv[1:])
@@ -461,12 +481,11 @@ if(__name__=='__main__'):
 	import time
 	tm=time.time()
 	
-	import platform
 	
-	perf={"AMD64":7670,'aarch64':6800}.get(platform.machine(),4000)
 	quality=int(args.get("q",None) or args.get("quality",None) or 15)
+	perfj,perf=estimate_performance()
 	ss=quality*perf
-	n_colors=int((quality**0.5)*6)
+	n_colors=int((ss**0.5)/22)
 	loops,dots,lines=img2ldl(im,n_colors=n_colors,ss=ss,debug=False)
 	
 	print(len(loops),'loops')
@@ -483,6 +502,15 @@ if(__name__=='__main__'):
 		f.write(s)
 	performance=ss/tm
 	print("===[time=%d seconds,\tperformance=%d pixels/sec]==="%(tm,performance))
+	perfj['time']=perfj.get('time',0)+tm
+	perfj['ss']=perfj.get('ss',0)+ss
+	import tempfile
+	pth=path.join(tempfile.gettempdir(),"img2svg_performance.json")
+	f=open(pth,'w')
+	import json
+	json.dump(perfj,f)
+	f.close()
+	
 	'''im2=Image.new("RGB",(1600,900))
 	dr=ImageDraw.Draw(im2)
 	for loop in loops:
