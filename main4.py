@@ -346,6 +346,7 @@ def img2ldl(im,ss=1e5,n_colors=32,debug=False,print_progress=True,back_delaunay=
 	delaunay_loops=[]
 	if(back_delaunay is None):
 		back_delaunay=min(int((ss**0.5)*2),ss/100)
+	max_area=max([a for a,b,c in loops])
 	if(back_delaunay):
 		delaunay_pts=[]
 		for xy in random.sample(xys,back_delaunay-4):
@@ -374,7 +375,7 @@ def img2ldl(im,ss=1e5,n_colors=32,debug=False,print_progress=True,back_delaunay=
 				color=npa2tuple_color(color/len(_pts))
 			
 			loop=[upscale(A).xy,upscale(B).xy,upscale(C).xy]
-			area=(polygon_area([point(i) for i in loop])*ss)**0.5
+			area=max_area-1
 			delaunay_loops.append((area,loop,color))
 	if(print_progress):
 		progbar('',0,print_finish=True)
