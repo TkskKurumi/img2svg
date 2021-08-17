@@ -195,11 +195,11 @@ def img2ldl(im,ss=1e5,n_colors=32,debug=False,print_progress=True,back_delaunay=
 		all_edges.add((0,y))
 		all_edges.add((sw-1,y))
 	
-	npaf32=lambda x:np.array(x,np.float32)
+	npaf32=lambda x:np.array(x,np.float64)
 	for xy in xys:
 		if(print_progress):progbar("calc group avg color",calc_xy_prog(*xy,sw,sh))
 		g=pixel_group.find(xy)
-		c=sim.getpixel(g)
+		c=sim.getpixel(xy)
 		if(g not in group_color):
 			group_color[g]=npaf32(c)
 		else:
