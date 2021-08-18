@@ -501,12 +501,13 @@ if(__name__=='__main__'):
 	perfj,perf=estimate_performance()
 	ss=quality*perf
 	n_colors=args.get("n_color",None) or int((ss**0.5)/22)
+	n_colors=int(n_colors)
 	print("ss=%d,n_colors=%d"%(ss,n_colors))
 	loops,dots,lines=img2ldl(im,n_colors=n_colors,ss=ss,debug=False)
 	if(args.get("no_lines",False) or args.get("nl",False)):
 		lines=[]
 	if(args.get("no_dots",False) or args.get("nd",False)):
-		lines=[]
+		dots=[]
 	
 	print(len(loops),'loops')
 	print(len(dots),'dots')
