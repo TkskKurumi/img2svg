@@ -505,6 +505,9 @@ if(__name__=='__main__'):
 	loops,dots,lines=img2ldl(im,n_colors=n_colors,ss=ss,debug=False)
 	if(args.get("no_lines",False) or args.get("nl",False)):
 		lines=[]
+	if(args.get("no_dots",False) or args.get("nd",False)):
+		lines=[]
+	
 	print(len(loops),'loops')
 	print(len(dots),'dots')
 	print(len(lines),'lines')
