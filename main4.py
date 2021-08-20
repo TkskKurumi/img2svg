@@ -389,7 +389,7 @@ def img2ldl(im,ss=1e5,n_colors=32,debug=False,print_progress=True,back_delaunay=
 				color=npa2tuple_color(color/len(_pts))
 			
 			loop=[upscale(A).xy,upscale(B).xy,upscale(C).xy]
-			area=max_area-1
+			area=ss-1
 			delaunay_loops.append((area,loop,color))
 	if(print_progress):
 		progbar('',0,print_finish=True)
