@@ -1,7 +1,7 @@
 from algorithms import *
 from myGeometry import polygon_area,point
 import numpy as np
-import random
+import random,shutil
 from PIL import Image,ImageDraw
 from delaunay_mesh import mesh
 def colordis(a,b):
@@ -120,7 +120,7 @@ def img2ldl(im,ss=1e5,n_colors=32,debug=False,print_progress=True,back_delaunay=
 			return inner
 		else:
 			return None
-	def progbar(title,prog,width=20,print_finish=False):
+	def progbar(title,prog,width=None,print_finish=False):
 		nonlocal i_prog,last_prog,last_title
 		if(print_finish):
 			t=time.time()
@@ -135,10 +135,15 @@ def img2ldl(im,ss=1e5,n_colors=32,debug=False,print_progress=True,back_delaunay=
 		if(title not in first_prog):
 			first_prog[title]=t
 		if(t-last_prog>0.1):
+			remain=(t-first_prog[title])/(prog+1e-10)*(1-prog)
+			tmp1="["
+			tmp2="] %.1f secs remain"%(remain)
+			if(width is None):
+				col=shutil.get_terminal_size().columns
+				width=col-len(tmp1)-len(tmp2)-len(title)-1
 			enmiao="#"*int(prog*width)
 			enmiao+="."*max(width-len(enmiao),0)
-			remain=(t-first_prog[title])/(prog+1e-10)*(1-prog)
-			print(title,"["+enmiao+"] %.1f secs remain"%(remain),end='\r')
+			print(title,tmp1+enmiao+tmp2,end='\r')
 			last_prog=t
 	
 	
