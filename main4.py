@@ -152,7 +152,7 @@ def img2ldl(im,ss=1e5,n_colors=32,debug=False,print_progress=True,back_delaunay=
 	calc_xy_prog=lambda x,y,w,h:(y*w+x)/w/h
 	
 	colors=[]
-	n_sample_color=int((n_colors*ss)**0.5)
+	n_sample_color=int((n_colors*ss*ss)**(1/3))
 	for idx,xy in enumerate(random.sample(xys,n_sample_color)):
 		if(print_progress):progbar("sample colors",idx/n_sample_color)
 		colors.append(np.array(sim.getpixel(xy)))
