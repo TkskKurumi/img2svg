@@ -539,7 +539,8 @@ if(__name__=='__main__'):
 	perfj,perf=estimate_performance()
 	if(quality=='dont_change'):
 		ss=quality
-	
+	else:
+		ss=float(quality)*perf
 	
 	n_colors=args.get("n_color",None)
 	#n_colors=int(n_colors)
