@@ -195,15 +195,17 @@ def img2ldl(im,ss=1e5,n_colors=32,debug=False,print_progress=True,back_delaunay=
 	for xy in xys1:
 		if(print_progress):progbar("detect edge",calc_xy_prog(*xy,sw-1,sh-1))
 		x,y=xy
-		if(pixel_group.finds(xy)<force_group):
-			closest=None
-			for dx,dy in [(0,1),(1,0)]:
-				x1,y1=x+dx,y+dy
-				dist=colordis(sim.getpixel(xy),sim.getpixel((x1,y1)))
-				if((closest is None) or ((dist,x1,y1)<closest)):
-					closest=(dist,x1,y1)
-			d,x1,y1=closest
-			pixel_group.join((x,y),(x1,y1))
+		
+		for dx,dy in [(0,1),(1,0),(1,1),(-1,1)]:
+			if(pixel_group.finds(xy)>=force_group):
+				break
+			x1,y1=x+dx,y+dy
+			if(x1<0):
+				continue
+			if(pixel_group.finds((x1,y1))<force_group):
+				pixel_group.join((x,y),(x1,y1))
+			#d,x1,y1=closest
+			#pixel_group.join((x,y),(x1,y1))
 		for dx,dy in [(0,1),(1,0)]:
 			x1,y1=x+dx,y+dy
 			if(pixel_group.find(xy)!=pixel_group.find((x1,y1))):
