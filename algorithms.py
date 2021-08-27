@@ -31,6 +31,7 @@ class DJS_sum:
 	def join(self,u,v):
 		self.d[self.find(u)]=self.find(v)
 		self.find(u)
+		self.find(v)
 DJS=disjointset
 def normalize_edge(u,v):
 	return tuple(sorted([u,v]))
