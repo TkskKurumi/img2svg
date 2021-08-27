@@ -107,7 +107,7 @@ def kmeans_with_kdt(k,points,n_iter=3,wei=None,progress_cb=None):
 		if(len(rets)<k):
 			rets.extend(random.sample(points,k-len(rets)))
 	return rets
-def img2ldl(im,ss=1e5,n_colors=32,debug=False,print_progress=True,back_delaunay=None,force_group=16):
+def img2ldl(im,ss=1e5,n_colors=None,debug=False,print_progress=True,back_delaunay=None,force_group=16):
 	import time
 	last_prog=time.time()
 	last_title=""
@@ -148,9 +148,21 @@ def img2ldl(im,ss=1e5,n_colors=32,debug=False,print_progress=True,back_delaunay=
 	
 	
 	w,h=im.size
-	rate=(ss/w/h)**0.5
-	sw,sh=int(w*rate),int(h*rate)
-	sim=im.resize((sw,sh),Image.LANCZOS)
+	if(ss!='dont_change'):
+		rate=(ss/w/h)**0.5
+		print("resize rate =",rate)
+		sw,sh=int(w*rate),int(h*rate)
+		sim=im.resize((sw,sh),Image.LANCZOS)
+	else:
+		sim=im.copy()
+		sw,sh=sim.size
+		ss=sw*sh
+		perfj,perf=estimate_performance()
+		print("estimated runtime",sw*sh/perf)
+	if(n_colors is None):
+		n_colors=int((ss**0.5)*0.5)
+	else:
+		n_colors=int(n_colors)
 	xys=list(wh_iter(sw,sh))
 	xys1=list(wh_iter(sw-1,sh-1))
 	xys2=list(wh_iter(sw-2,sh-2))
@@ -518,12 +530,16 @@ if(__name__=='__main__'):
 	tm=time.time()
 	
 	
-	quality=int(args.get("q",None) or args.get("quality",None) or 15)
+	quality=args.get("q",None) or args.get("quality",None) or 'dont_change'
 	perfj,perf=estimate_performance()
-	ss=quality*perf
-	n_colors=args.get("n_color",None) or int((ss**0.5)/40)
-	n_colors=int(n_colors)
-	print("ss=%d,n_colors=%d"%(ss,n_colors))
+	if(quality=='dont_change'):
+		ss=quality
+		
+	else:
+		ss=float(quality)*perf
+	n_colors=args.get("n_color",None)
+	#n_colors=int(n_colors)
+	print("ss=%s,n_colors=%s"%(ss,n_colors))
 	loops,dots,lines=img2ldl(im,n_colors=n_colors,ss=ss,debug=False)
 	if(args.get("no_lines",False) or args.get("nl",False)):
 		lines=[]
