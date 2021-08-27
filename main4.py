@@ -397,16 +397,23 @@ def img2ldl(im,ss=1e5,n_colors=None,debug=False,print_progress=True,back_delauna
 		print(areas,ss)
 	delaunay_loops=[]
 	if(back_delaunay is None):
-		back_delaunay=min(int((ss**0.5)*2),ss/100)
+		back_delaunay=int(len(loops)/23)
 	max_area=max([a for a,b,c in loops])
 	if(back_delaunay):
 		delaunay_pts=[]
-		for xy in random.sample(xys,back_delaunay-4):
-			delaunay_pts.append(xy)
-		for x in [0,sw-1]:
-			for y in [0,sh-1]:
-				delaunay_pts.append((x,y))
+		#delaunay_pts.extend(xys)
+		for a,l,c in loops:
+			delaunay_pts.extend([downscale(i) for i in l])
+		for x in range(sw):
+			delaunay_pts.append((x,0))
+			delaunay_pts.append((x,sh-1))
+		for y in range(sh):
+			delaunay_pts.append((0,y))
+			delaunay_pts.append((sw-1,y))
 		delaunay_pts=[point(x,y) for x,y in set(delaunay_pts)]
+		delaunay_pts=random.sample(delaunay_pts,back_delaunay)
+		
+		
 		M=mesh.delaunay(delaunay_pts,prog_cb=prog_cb('delaunay'))
 		tri_points=M.get_tri_integral_point()
 		
@@ -431,6 +438,7 @@ def img2ldl(im,ss=1e5,n_colors=None,debug=False,print_progress=True,back_delauna
 			delaunay_loops.append((area,loop,color))
 	if(print_progress):
 		progbar('',0,print_finish=True)
+	print("delaunay loops %d"%len(delaunay_loops))
 	loops.extend(delaunay_loops)
 	return sorted(loops,key=lambda x:-x[0]),dots,lines
 def ldl2svg(loops,dots,lines,smooth=4,blur_dots=1.2,scale=3,cutdown_dots=10000,line_alpha=0.3,loop_stroke=True,loop_stroke_width=1.2,loop_trim=False):
