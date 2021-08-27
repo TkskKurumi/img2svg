@@ -154,13 +154,18 @@ def img2ldl(im,ss=1e5,n_colors=None,debug=False,print_progress=True,back_delauna
 		sw,sh=int(w*rate),int(h*rate)
 		sim=im.resize((sw,sh),Image.LANCZOS)
 	else:
+		global dont_change_ss
 		sim=im.copy()
 		sw,sh=sim.size
+		
 		ss=sw*sh
+		dont_change_ss=ss
 		perfj,perf=estimate_performance()
 		print("estimated runtime",sw*sh/perf)
+		rate=1
 	if(n_colors is None):
-		n_colors=int((ss**0.5)*0.5)
+		n_colors=int((ss**0.5)/30)
+		print("n_colors =",n_colors)
 	else:
 		n_colors=int(n_colors)
 	xys=list(wh_iter(sw,sh))
@@ -534,9 +539,8 @@ if(__name__=='__main__'):
 	perfj,perf=estimate_performance()
 	if(quality=='dont_change'):
 		ss=quality
-		
-	else:
-		ss=float(quality)*perf
+	
+	
 	n_colors=args.get("n_color",None)
 	#n_colors=int(n_colors)
 	print("ss=%s,n_colors=%s"%(ss,n_colors))
@@ -555,6 +559,10 @@ if(__name__=='__main__'):
 	hh=900
 	w,h=im.size
 	s=ldl2svg(loops,dots,lines,scale=min(ww/w,hh/h))
+	if(quality=='dont_change'):
+		ss=dont_change_ss
+	else:
+		print('ln566',ss,quality)
 	from os import path
 	with open(path.join(path.dirname(__file__),'sample_loops=%d_method=main4.svg'%len(loops)),"w") as f:
 		f.write(s)
