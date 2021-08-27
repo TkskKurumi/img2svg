@@ -368,6 +368,7 @@ def img2ldl(im,ss=1e5,n_colors=None,debug=False,print_progress=True,back_delauna
 					_rad=(x-xs)**2+(y-ys)**2+1
 					rad=max(rad,_rad)
 					#print(_rad)
+				rad**=0.5
 				dots.append((upscale((xs,ys)),c,rad/rate))
 				pass
 	if(debug):
