@@ -441,7 +441,7 @@ def img2ldl(im,ss=1e5,n_colors=None,debug=False,print_progress=True,back_delauna
 		progbar('',0,print_finish=True)
 	print("delaunay loops %d"%len(delaunay_loops))
 	loops.extend(delaunay_loops)
-	return sorted(loops,key=lambda x:-x[0]),dots,lines
+	return sorted(loops,key=lambda x:-x[0]),dots,lines,rate
 def ldl2svg(loops,dots,lines,smooth=4,blur_dots=1.2,scale=3,cutdown_dots=10000,line_alpha=0.3,loop_stroke=True,loop_stroke_width=1.2,loop_trim=False):
 	out=""
 	def prt(*args,end='\n'):
@@ -554,7 +554,7 @@ if(__name__=='__main__'):
 	n_colors=args.get("n_color",None)
 	#n_colors=int(n_colors)
 	print("ss=%s,n_colors=%s"%(ss,n_colors))
-	loops,dots,lines=img2ldl(im,n_colors=n_colors,ss=ss,debug=False)
+	loops,dots,lines,rate=img2ldl(im,n_colors=n_colors,ss=ss,debug=False)
 	if(args.get("no_lines",False) or args.get("nl",False)):
 		lines=[]
 	if(args.get("no_dots",False) or args.get("nd",False)):
@@ -568,7 +568,8 @@ if(__name__=='__main__'):
 	ww=1600
 	hh=900
 	w,h=im.size
-	s=ldl2svg(loops,dots,lines,scale=min(ww/w,hh/h))
+	scale=min(ww/w,hh/h)
+	s=ldl2svg(loops,dots,lines,scale=scale,loop_stroke_width=scale/rate)
 	if(quality=='dont_change'):
 		ss=dont_change_ss
 	else:
