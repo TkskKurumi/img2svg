@@ -320,6 +320,8 @@ def img2ldl(im,ss=1e5,n_colors=None,debug=False,print_progress=True,back_delauna
 				loop=pathu
 				loop.append(u)
 				loop.extend(pathv[::-1])
+				if(len(loop)<force_group**0.5):
+					continue
 				area=polygon_area([point(i) for i in loop])
 				c=group_color[i]/group_pixeln[i]
 				_loops.append((area,[upscale(_) for _ in loop],npa2tuple_color(c)))
@@ -333,7 +335,8 @@ def img2ldl(im,ss=1e5,n_colors=None,debug=False,print_progress=True,back_delauna
 			#area,loop=largest
 			#areas+=area
 			do_lines=False
-			loops.extend([__loops for __loops in _loops if len(__loops[1])>force_group**0.5])
+			#loops.extend([__loops for __loops in _loops if len(__loops[1])>force_group**0.5])
+			loops.extend(_loops)
 			#loops.append((area,[upscale(_) for _ in loop],))
 			if(debug):
 				for xy in group_pixels[i]:
