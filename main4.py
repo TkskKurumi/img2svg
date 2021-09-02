@@ -585,7 +585,7 @@ if(__name__=='__main__'):
 	hh=900
 	w,h=im.size
 	scale=min(ww/w,hh/h)
-	s=ldl2svg(loops,dots,lines,scale=scale,loop_stroke_width=3/rate)
+	s=ldl2svg(loops,dots,lines,scale=scale,loop_stroke_width=1.618/rate)
 	if(quality=='dont_change'):
 		ss=dont_change_ss
 	else:
