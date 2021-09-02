@@ -320,7 +320,7 @@ def img2ldl(im,ss=1e5,n_colors=None,debug=False,print_progress=True,back_delauna
 				loop=pathu
 				loop.append(u)
 				loop.extend(pathv[::-1])
-				if(len(loop)<force_group**0.5):
+				if(len(loop)-0.05<=force_group**0.5):
 					continue
 				area=polygon_area([point(i) for i in loop])
 				'''if(area>sw*sw*0.998):
