@@ -7,13 +7,10 @@ def parse_args(s,flag_start='-',default_flag='default'):
 	prev=' '
 	
 	for i in s:
-		if(i=='\\'):
-			if(prev!='\\'):
-				prev=i
-				continue
+		
 			
 		if(in_quote):
-			if(i=='"' and prev!='\\'):
+			if(i=='"'):
 				in_quote=False
 			else:
 				content+=i
@@ -26,7 +23,7 @@ def parse_args(s,flag_start='-',default_flag='default'):
 			else:
 				flag+=i
 		else:
-			if(i=='"' and prev!='\\'):
+			if(i=='"'):
 				in_quote=True
 				content=''
 			elif(i==flag_start and prev==' '):

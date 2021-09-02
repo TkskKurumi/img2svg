@@ -551,11 +551,19 @@ if(__name__=='__main__'):
 	from glob import glob
 	from os import path
 	import random
-	pth=path.dirname(__file__)
-	ims=list(glob(path.join(pth,'*.jpg')))
-	ims+=list(glob(path.join(pth,'*.png')))
-	if(ims):
-		im=Image.open(random.choice(ims)).convert("RGB")
+	if(args.get('i')):
+		impth=args.get('i')
+		im=Image.open(impth).convert("RGB")
+	else:
+		pth=path.dirname(__file__)
+		ims=list(glob(path.join(pth,'*.jpg')))
+		ims+=list(glob(path.join(pth,'*.png')))
+		if(ims):
+			#im=Image.open(random.choice(ims)).convert("RGB")
+			im=random.choice(ims).convert("RGB")
+		else:
+			print("No input image!!!")
+	
 	import time
 	tm=time.time()
 	
@@ -591,7 +599,11 @@ if(__name__=='__main__'):
 	else:
 		print('ln566',ss,quality)
 	from os import path
-	with open(path.join(path.dirname(__file__),'sample_loops=%d_method=main4.svg'%len(loops)),"w") as f:
+	if(args.get("o")):
+		outpth=args.get("o")
+	else:
+		path.join(path.dirname(__file__),'loops=%d_method=main4.svg'%len(loops))
+	with open(outpth,"w") as f:
 		f.write(s)
 	performance=ss/tm
 	print("===[time=%d seconds,\tperformance=%d pixels/sec]==="%(tm,performance))
