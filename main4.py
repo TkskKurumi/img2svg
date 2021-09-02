@@ -107,12 +107,13 @@ def kmeans_with_kdt(k,points,n_iter=3,wei=None,progress_cb=None):
 		if(len(rets)<k):
 			rets.extend(random.sample(points,k-len(rets)))
 	return rets
-def img2ldl(im,ss=1e5,n_colors=None,debug=False,print_progress=True,back_delaunay=None,force_group=16):
+def img2ldl(im,ss=1e5,n_colors=None,debug=False,print_progress=True,back_delaunay=None,force_group=0):
 	import time
 	last_prog=time.time()
 	last_title=""
 	i_prog=0
 	first_prog=dict()
+	
 	def prog_cb(title):
 		if(print_progress):
 			def inner(prog,title=title):
