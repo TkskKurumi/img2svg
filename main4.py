@@ -560,7 +560,7 @@ if(__name__=='__main__'):
 		ims+=list(glob(path.join(pth,'*.png')))
 		if(ims):
 			#im=Image.open(random.choice(ims)).convert("RGB")
-			im=random.choice(ims).convert("RGB")
+			im=Image.open(random.choice(ims)).convert("RGB")
 		else:
 			print("No input image!!!")
 	
@@ -602,7 +602,7 @@ if(__name__=='__main__'):
 	if(args.get("o")):
 		outpth=args.get("o")
 	else:
-		path.join(path.dirname(__file__),'loops=%d_method=main4.svg'%len(loops))
+		outpth=path.join(path.dirname(__file__),'loops=%d_method=main4.svg'%len(loops))
 	with open(outpth,"w") as f:
 		f.write(s)
 	performance=ss/tm
