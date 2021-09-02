@@ -323,6 +323,9 @@ def img2ldl(im,ss=1e5,n_colors=None,debug=False,print_progress=True,back_delauna
 				if(len(loop)<force_group**0.5):
 					continue
 				area=polygon_area([point(i) for i in loop])
+				if(area>sw*sw*0.998):
+					print("too large an area of loop, continued")
+					continue
 				c=group_color[i]/group_pixeln[i]
 				_loops.append((area,[upscale(_) for _ in loop],npa2tuple_color(c)))
 		_loops.sort(key=lambda x:-x[0])
