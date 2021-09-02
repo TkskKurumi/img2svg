@@ -412,8 +412,8 @@ def img2ldl(im,ss=1e5,n_colors=None,debug=False,print_progress=True,back_delauna
 			delaunay_pts.append((0,y))
 			delaunay_pts.append((sw-1,y))
 		delaunay_pts=random.sample(delaunay_pts,back_delaunay-4)
-		for x in [0,sw]:
-			for y in [0,sh]:
+		for x in [0,sw-1]:
+			for y in [0,sh-1]:
 				delaunay_pts.append((x,y))
 		delaunay_pts=[point(x,y) for x,y in set(delaunay_pts)]
 		
