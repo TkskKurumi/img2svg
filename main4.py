@@ -174,7 +174,7 @@ def img2ldl(im,ss=1e5,n_colors=None,debug=False,print_progress=True,back_delauna
 	calc_xy_prog=lambda x,y,w,h:(y*w+x)/w/h
 	
 	colors=[]
-	n_sample_color=int((n_colors*ss*ss)**(1/3))
+	n_sample_color=int((n_color**0.2)*(ss**0.8))
 	for idx,xy in enumerate(random.sample(xys,n_sample_color)):
 		if(print_progress):progbar("sample colors",idx/n_sample_color)
 		colors.append(np.array(sim.getpixel(xy)))
@@ -444,7 +444,7 @@ def img2ldl(im,ss=1e5,n_colors=None,debug=False,print_progress=True,back_delauna
 					color+=np.array(get(x*w/sw,y*h/sh),np.float32)
 				color=npa2tuple_color(color/len(_pts))
 			area=polygon_area([A,B,C])
-			area=(area**0.1)*(ss**0.9)
+			area=(area**0.3)*(ss**0.7)
 			loop=[upscale(A).xy,upscale(B).xy,upscale(C).xy]
 			
 			delaunay_loops.append((area,loop,color))
