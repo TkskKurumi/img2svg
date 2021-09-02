@@ -451,7 +451,7 @@ def img2ldl(im,ss=1e5,n_colors=None,debug=False,print_progress=True,back_delauna
 	
 	if(print_progress):
 		progbar('',0,print_finish=True)
-	print(delaunay_loops)
+	#print(delaunay_loops)
 	print("delaunay loops %d"%len(delaunay_loops))
 	
 	loops.extend(delaunay_loops)
@@ -509,7 +509,7 @@ def ldl2svg(loops,dots,lines,smooth=4,blur_dots=1.2,scale=3,cutdown_dots=10000,l
 			prt(f,end='')
 			prt("%.2f"%(x*scale),"%.2f"%(y*scale),end=' ')
 			f="L"
-		prt('" stroke="RGBA(%d,%d,%d,%.1f%%)" fill="none" stroke-width="%.1f" />'%(*c[:3],100*line_alpha,1.5*scale))
+		prt('" stroke="RGBA(%d,%d,%d,%.1f%%)" fill="none" stroke-width="%.1f" />'%(*c[:3],100*line_alpha,loop_stroke_width*scale/2))
 	for line in lines:
 		points,c=line
 		points=smooth_points(points,smooth)
@@ -519,7 +519,7 @@ def ldl2svg(loops,dots,lines,smooth=4,blur_dots=1.2,scale=3,cutdown_dots=10000,l
 			prt(f,end='')
 			prt("%.2f"%(x*scale),"%.2f"%(y*scale),end=' ')
 			f="L"
-		prt('" stroke="RGBA(%d,%d,%d,%.1f%%)" fill="none" stroke-width="%.1f" />'%(*c[:3],50*line_alpha,3*scale))
+		prt('" stroke="RGBA(%d,%d,%d,%.1f%%)" fill="none" stroke-width="%.1f" />'%(*c[:3],50*line_alpha,loop_stroke_width*scale))
 	
 	prt("</svg>",end='')
 	return out
