@@ -332,8 +332,8 @@ def img2ldl(im,ss=1e5,n_colors=None,debug=False,print_progress=True,back_delauna
 		_loops.sort(key=lambda x:-x[0])
 		le=len(_loops)
 		from math import ceil
-		
-		_loops=_loops[:ceil(le**0.5)]
+		az=min(ceil(le**0.5),5)
+		_loops=_loops[:az]
 		do_lines=True
 		if(_loops):		#loop
 			#area,loop=largest
