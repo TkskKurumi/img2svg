@@ -254,48 +254,51 @@ def img2ldl(im,ss=1e5,n_colors=None,debug=False,print_progress=True,back_delauna
 	#largest=None
 	_loops=list()
 	for idx,G in enumerate(graphs):
-		spt=G.span_tree()
-		longest=None
+		spts=[]
+		ls=list(G.neibours)
+		if(len(ls)>10):
+			ls=random.sample(ls,10)
+		for root in ls:
+			spts.append(G.span_tree(root=root))
 		for edg in G.edges:
 			if(print_progress):
-				no_edges+=1
 				progbar("generating loops",no_edges/sm_edges)
-			if(edg in spt.edges):
-				continue
+				no_edges+=1
 			u,v=edg
-			dist=spt.dist(u,v)
-			pathu=[]
-			pathv=[]
-			while(u!=v):
-				if(spt.get_depth(u)>spt.get_depth(v)):
-					pathu.append(u)
-					u=spt.fa[u]
-				elif(spt.get_depth(u)<spt.get_depth(v)):
-					pathv.append(v)
-					v=spt.fa[v]
-				else:
-					pathu.append(u)
-					u=spt.fa[u]
-					pathv.append(v)
-					v=spt.fa[v]
-			loop=pathu
-			loop.append(u)
-			loop.extend(pathv[::-1])
-			if(len(loop)-0.05<=force_group**0.5):
+			loop=None
+			for tree in spts:
+				if(edg in tree.edges):
+					continue
+				dist=tree.dist(u,v)
+				if(dist<=4):
+					continue
+				if((loop is not None) and (dist+1>len(loop))):
+					continue
+				pathu=[]
+				pathv=[]
+				while(u!=v):
+					if(tree.get_depth(u)>tree.get_depth(v)):
+						pathu.append(u)
+						u=tree.fa[u]
+					elif(tree.get_depth(u)<tree.get_depth(v)):
+						pathv.append(v)
+						v=tree.fa[v]
+					else:
+						pathu.append(u)
+						u=tree.fa[u]
+						pathv.append(v)
+						v=tree.fa[v]
+				loop=pathu
+				loop.append(u)
+				loop.extend(pathv[::-1])
+			if(loop is None):
 				continue
-			if(len(loop)<=4):
-				continue
-			area=polygon_area([point(i) for i in loop])
-			'''if(area>sw*sw*0.998):
-				print("too large an area of loop, continued")
-				continue'''
 			cc=point(0,0)
 			for i in loop:
 				cc=cc+point(i)
 			cc/=len(loop)
 			c=sim.getpixel((int(cc.x),int(cc.y)))
-			#c=group_color[i]/group_pixeln[i]
-			
+			area=polygon_area([point(i) for i in loop])
 			loops.append((area,[upscale(_) for _ in loop],npa2tuple_color(c)))
 	#le=len(loops)
 	#le=int(le**0.8)
