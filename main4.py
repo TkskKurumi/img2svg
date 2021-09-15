@@ -413,8 +413,8 @@ def img2ldl(im,ss=1e5,n_colors=None,debug=False,print_progress=True,back_delauna
 	if(back_delaunay):
 		#delaunay_pts=[]
 		#delaunay_pts.extend(xys)
-		for a,l,c in loops:
-			delaunay_pts.extend([downscale(i) for i in l])
+		'''for a,l,c in loops:
+			delaunay_pts.extend([downscale(i) for i in l])'''
 		for x in range(sw):
 			delaunay_pts.append((x,0))
 			delaunay_pts.append((x,sh-1))
