@@ -289,6 +289,7 @@ def img2ldl(im,ss=1e5,n_colors=None,debug=False,print_progress=True,back_delauna
 		areas=0
 		print("len group_graph",len(group_graph))
 	dots=[]
+	delaunay_pts=[]
 	for i in group_graph:
 		graphs=group_graph[i].seperate_by_connectivity()
 		#largest=None
@@ -349,6 +350,8 @@ def img2ldl(im,ss=1e5,n_colors=None,debug=False,print_progress=True,back_delauna
 					im_pixtype.putpixel(xy,(0,0,255))
 		
 		else:						   #lines
+			for x,y in group_pixels[i]:
+				delaunay_pts.append((x,y))
 			_lines=[]
 			_len=0
 			c=group_color[i]/group_pixeln[i]
@@ -408,7 +411,7 @@ def img2ldl(im,ss=1e5,n_colors=None,debug=False,print_progress=True,back_delauna
 		back_delaunay=int(len(loops)/23)
 	max_area=max([a for a,b,c in loops])
 	if(back_delaunay):
-		delaunay_pts=[]
+		#delaunay_pts=[]
 		#delaunay_pts.extend(xys)
 		for a,l,c in loops:
 			delaunay_pts.extend([downscale(i) for i in l])
