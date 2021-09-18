@@ -412,7 +412,7 @@ def img2ldl(im,ss=1e5,n_colors=None,debug=False,print_progress=True,back_delauna
 		print(areas,ss)
 	delaunay_loops=[]
 	for a,l,c in loops:
-		back_delaunay.extend([upscale(_) for _ in l])
+		back_delaunay.extend([downscale(_) for _ in l])
 	if(back_delaunay is None):
 		back_delaunay=min(int(len(loops)/5),int(len(delaunay_pts)**0.75))
 	max_area=max([a for a,b,c in loops])
