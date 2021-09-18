@@ -184,6 +184,7 @@ def img2ldl(im,ss=1e5,n_colors=None,debug=False,print_progress=True,back_delauna
 	import kdt
 	K=kdt.kdt()
 	K.build([kdt.point(c) for c in colors],stop_num=3)
+	print("color kdt performance",K.avg_calc)
 	sim_arr=np.zeros(sim.size,np.uint32)
 	#_sim_arr=np.asarray(sim).swapaxes(0,1)
 	if(debug):id2c=dict()
@@ -421,7 +422,8 @@ def img2ldl(im,ss=1e5,n_colors=None,debug=False,print_progress=True,back_delauna
 		for y in range(sh):
 			delaunay_pts.append((0,y))
 			delaunay_pts.append((sw-1,y))
-		delaunay_pts=random.sample(delaunay_pts,back_delaunay-4)
+		if(len(delaunay_pts)>back_delaunay-4):
+			delaunay_pts=random.sample(delaunay_pts,back_delaunay-4)
 		for x in [0,sw-1]:
 			for y in [0,sh-1]:
 				delaunay_pts.append((x,y))

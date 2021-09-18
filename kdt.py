@@ -66,6 +66,8 @@ class kdt:
 		self.right_point=[]
 		self.root=None
 		self.size=0
+		self._sum_depth=0
+		self._sum_calc=0
 	def _new_index(self):
 		self.node_points.append(None)
 		self.left_child.append(None)
@@ -76,14 +78,24 @@ class kdt:
 			self.root=len(self.node_points)-1
 		self.size=len(self.node_points)
 		return self.size-1
+	@property
+	def avg_depth(self):
+		return self._sum_depth/self._sum_points
+	@property
+	def avg_calc(self):
+		return self._sum_calc/self._sum_points
 	def build(self,points,stop_num=3,select_point='random',depth=0,stop_depth=20,set_id=True):
 		if(set_id):
 			for id,i in enumerate(points):
 				i.id=id
-		
+		if(depth==0):
+			self._sum_depth=0
+			self._sum_points=len(points)
 		u=self._new_index()
 		if(len(points)<=stop_num or depth>stop_depth):
 			self.node_points[u]=points
+			self._sum_depth+=len(points)*depth
+			self._sum_calc+=(2*depth+len(points))*len(points)	#compare lr son, compare leaf points
 			return u
 		if(select_point=='random'):
 			lpoint,rpoint=random.sample(points,2)
