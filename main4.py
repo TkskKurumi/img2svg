@@ -451,7 +451,7 @@ def img2ldl(im,ss=1e5,n_colors=None,debug=False,print_progress=True,back_delauna
 					color+=np.array(get(x*w/sw,y*h/sh),np.float32)
 				color=npa2tuple_color(color/len(_pts))
 			area=polygon_area([A,B,C])
-			area=(area**0.3)*(ss**0.7)
+			area=(area**0.1)*(ss**0.9)
 			loop=[upscale(A).xy,upscale(B).xy,upscale(C).xy]
 			
 			delaunay_loops.append((area,loop,color))
