@@ -604,7 +604,8 @@ if(__name__=='__main__'):
 	hh=900
 	w,h=im.size
 	scale=min(ww/w,hh/h)
-	s=ldl2svg(loops,dots,lines,scale=scale,loop_stroke_width=1.618/rate)
+	loop_stroke=not (args.get("ns",False) or args.get("no_stroke",False))
+	s=ldl2svg(loops,dots,lines,scale=scale,loop_stroke=loop_stroke,loop_stroke_width=1.618/rate)
 	if(quality=='dont_change'):
 		ss=dont_change_ss
 	else:
