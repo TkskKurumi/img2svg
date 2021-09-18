@@ -409,7 +409,7 @@ def img2ldl(im,ss=1e5,n_colors=None,debug=False,print_progress=True,back_delauna
 		print(areas,ss)
 	delaunay_loops=[]
 	if(back_delaunay is None):
-		back_delaunay=int(len(loops)/23)
+		back_delaunay=max(int(len(loops)/23),int(len(delaunay_pts)**0.5))
 	max_area=max([a for a,b,c in loops])
 	if(back_delaunay):
 		#delaunay_pts=[]
@@ -423,6 +423,7 @@ def img2ldl(im,ss=1e5,n_colors=None,debug=False,print_progress=True,back_delauna
 			delaunay_pts.append((0,y))
 			delaunay_pts.append((sw-1,y))'''
 		if(len(delaunay_pts)>back_delaunay-4):
+			print("delaunay_pts %d->%d"%(len(delaunay_pts),back_delaunay))
 			delaunay_pts=random.sample(delaunay_pts,back_delaunay-4)
 		for x in [0,sw-1]:
 			for y in [0,sh-1]:
