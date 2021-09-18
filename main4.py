@@ -416,12 +416,12 @@ def img2ldl(im,ss=1e5,n_colors=None,debug=False,print_progress=True,back_delauna
 		#delaunay_pts.extend(xys)
 		'''for a,l,c in loops:
 			delaunay_pts.extend([downscale(i) for i in l])'''
-		for x in range(sw):
+		'''for x in range(sw):
 			delaunay_pts.append((x,0))
 			delaunay_pts.append((x,sh-1))
 		for y in range(sh):
 			delaunay_pts.append((0,y))
-			delaunay_pts.append((sw-1,y))
+			delaunay_pts.append((sw-1,y))'''
 		if(len(delaunay_pts)>back_delaunay-4):
 			delaunay_pts=random.sample(delaunay_pts,back_delaunay-4)
 		for x in [0,sw-1]:
