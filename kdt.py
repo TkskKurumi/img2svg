@@ -8,12 +8,12 @@ class point:
 		self.arr=arr
 		self.hash=None
 		self.id=None
+		self.nd=len(arr)
 	def dist(self,other):
-		
 		ret=0
-		
-		for idx,i in enumerate(self.arr):
-			ret+=(i-other.arr[idx])**2
+		#for idx,i in enumerate(self.arr):
+		for idx in range(self.nd):
+			ret+=(self.arr[idx]-other.arr[idx])**2
 		return ret
 	
 	def __str__(self):
@@ -117,12 +117,15 @@ class kdt:
 		print("call ann",self._cnt_call_ann_recursive/self._cnt_call_ann_top)
 		print("calc dist",self._cnt_calc_dist/self._cnt_call_ann_top)
 		print("recall",self._cnt_recall/self._cnt_call_ann_top)
-	def build(self,points,stop_num=1,depth=0,stop_depth=20):
+	def build(self,points,stop_num=None,depth=0,stop_depth=20):
 		#print(len(points),depth)
 		if(depth==0):
 			
 			self.initiate_statics()
 			points=list(set(points))
+			if(stop_num is None):
+				#stop_num=len(points)**0.25
+				stop_num=1
 			#print('\n'.join(sorted([str(tuple(i.arr)) for i in points])),len(points))
 			for idx,i in enumerate(points):
 				if(not isinstance(i,point)):
@@ -161,7 +164,7 @@ class kdt:
 		self.left_child[u]=self.build(lpoints,stop_num=stop_num,depth=depth+1,stop_depth=stop_depth)
 		self.right_child[u]=self.build(rpoints,stop_num=stop_num,depth=depth+1,stop_depth=stop_depth)
 		return u
-	def ann1(self,p,u=None,cut_dist=_inf,with_dist=False):
+	def ann1(self,p,u=None,cut_dist=_inf,with_dist=False,recall=False):
 		
 		if(u is None):
 			self._cnt_call_ann_top+=1
@@ -181,6 +184,7 @@ class kdt:
 					ret=i
 					self._cnt_calc_dist+=1
 					retd=p.dist(ret)
+					continue
 				self._cnt_calc_dist+=1
 				id=p.dist(i)
 				if(id<retd):
@@ -193,11 +197,11 @@ class kdt:
 		value=self.value[u]
 		if(p.arr[axis]<=value):
 			ret,retd=self.ann1(p,self.left_child[u],cut_dist=cut_dist)
-			if(min(retd,cut_dist)<abs(p.arr[axis]-value)):
+			if(recall and min(retd,cut_dist)>abs(p.arr[axis]-value)):
 				self._cnt_recall+=1
 				ret1,ret1d=self.ann1(p,self.right_child[u],cut_dist=min(retd,cut_dist))
 				
-				#ret1d=ret1.dist(p)
+				
 				if(ret1d<retd):
 					assert (ret1 is not None)
 					return ret1,ret1d
@@ -209,7 +213,7 @@ class kdt:
 		else:
 			ret,retd = self.ann1(p,self.right_child[u],cut_dist=cut_dist)
 			assert (ret is not None),"%s,%s"%(self.right_child[u],self.node_points[self.right_child[u]])
-			if(min(retd,cut_dist)<abs(p.arr[axis]-value)):
+			if(recall and min(retd,cut_dist)>abs(p.arr[axis]-value)):
 				self._cnt_recall+=1
 				ret1,ret1d=self.ann1(p,self.left_child[u],cut_dist=min(retd,cut_dist))
 				
@@ -223,7 +227,7 @@ class kdt:
 			else:
 				return ret,retd
 			
-class _kdt:
+'''class _kdt:
 	def __init__(self):
 		self.node_points=[]
 		self.left_child=[]
@@ -351,13 +355,13 @@ class _kdt:
 				else:
 					return ret
 			else:
-				return ret
+				return ret'''
 if(__name__=='__main__'):
 	import random
 	def rand_nd(n):
-		return tuple([random.random() for i in range(n)])
+		return tuple([random.random()*255 for i in range(n)])
 		#return tuple([random.choice([1,2,3]) for i in range(n)])
-	nd=2
+	nd=10
 	num=1024
 	points=[point(rand_nd(nd)) for i in range(num)]
 	def find_nearest_basic():
