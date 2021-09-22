@@ -160,13 +160,16 @@ class kdt:
 		self.left_child[u]=self.build(lpoints,stop_num=stop_num,depth=depth+1,stop_depth=stop_depth)
 		self.right_child[u]=self.build(rpoints,stop_num=stop_num,depth=depth+1,stop_depth=stop_depth)
 		return u
-	def ann1(self,p,u=None,cut_dist=_inf):
+	def ann1(self,p,u=None,cut_dist=_inf,with_dist=False):
 		
 		if(u is None):
 			self._cnt_call_ann_top+=1
-			ret = self.ann1(p,u=self.root)
+			ret,retd = self.ann1(p,u=self.root,with_dist=True)
 			assert ret is not None
-			return ret
+			if(with_dist):
+				return ret
+			else:
+				return ret,retd
 		self._cnt_call_ann_recursive+=1
 		#leaf node
 		if(self.node_points[u] is not None):
@@ -183,45 +186,41 @@ class kdt:
 					ret=i
 					retd=id
 			assert (ret is not None),'ret is None,%s'%self.node_points[u]
-			return ret
+			return ret,retd
 		#print(self.axis[u],self.value[u],self.node_points[u],u)
 		axis=self.axis[u]
 		value=self.value[u]
 		if(p.arr[axis]<=value):
-			ret=self.ann1(p,self.left_child[u],cut_dist=cut_dist)
-			self._cnt_calc_dist+=1
-			retd=ret.dist(p)
+			ret,retd=self.ann1(p,self.left_child[u],cut_dist=cut_dist)
 			if(min(retd,cut_dist)<abs(p.arr[axis]-value)):
 				self._cnt_recall+=1
-				ret1=self.ann1(p,self.right_child[u],cut_dist=min(retd,cut_dist))
-				self._cnt_calc_dist+=1
-				ret1d=ret1.dist(p)
+				ret1,ret1d=self.ann1(p,self.right_child[u],cut_dist=min(retd,cut_dist))
+				
+				#ret1d=ret1.dist(p)
 				if(ret1d<retd):
 					assert (ret1 is not None)
-					return ret1
+					return ret1,ret1d
 				else:
 					assert (ret is not None)
-					return ret
+					return ret,retd
 			else:
-				return ret
+				return ret,retd
 		else:
-			ret = self.ann1(p,self.right_child[u],cut_dist=cut_dist)
+			ret,retd = self.ann1(p,self.right_child[u],cut_dist=cut_dist)
 			assert (ret is not None),"%s,%s"%(self.right_child[u],self.node_points[self.right_child[u]])
-			self._cnt_calc_dist+=1
-			retd=ret.dist(p)
 			if(min(retd,cut_dist)<abs(p.arr[axis]-value)):
 				self._cnt_recall+=1
-				ret1=self.ann1(p,self.left_child[u],cut_dist=min(retd,cut_dist))
-				self._cnt_calc_dist+=1
-				ret1d=ret1.dist(p)
+				ret1,ret1d=self.ann1(p,self.left_child[u],cut_dist=min(retd,cut_dist))
+				
+				#ret1d=ret1.dist(p)
 				if(ret1d<retd):
 					assert (ret1 is not None)
-					return ret1
+					return ret1,ret1d
 				else:
 					assert (ret is not None)
-					return ret
+					return ret,retd
 			else:
-				return ret
+				return ret,retd
 			
 class _kdt:
 	def __init__(self):
