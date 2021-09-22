@@ -123,6 +123,7 @@ class kdt:
 			
 			self.initiate_statics()
 			points=list(set(points))
+			print('\n'.join(sorted([str(tuple(i.arr)) for i in points])),len(points))
 			for idx,i in enumerate(points):
 				if(not isinstance(i,point)):
 					points[idx]=point(i)
@@ -167,9 +168,9 @@ class kdt:
 			ret,retd = self.ann1(p,u=self.root,with_dist=True)
 			assert ret is not None
 			if(with_dist):
-				return ret
-			else:
 				return ret,retd
+			else:
+				return ret
 		self._cnt_call_ann_recursive+=1
 		#leaf node
 		if(self.node_points[u] is not None):
@@ -354,9 +355,9 @@ class _kdt:
 if(__name__=='__main__'):
 	import random
 	def rand_nd(n):
-		#return tuple([random.random() for i in range(n)])
-		return tuple([random.choice([1,2,3]) for i in range(n)])
-	nd=5
+		return tuple([random.random() for i in range(n)])
+		#return tuple([random.choice([1,2,3]) for i in range(n)])
+	nd=2
 	num=1024
 	points=[point(rand_nd(nd)) for i in range(num)]
 	def find_nearest_basic():
