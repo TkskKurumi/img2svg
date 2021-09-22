@@ -101,6 +101,7 @@ def kmeans_with_kdt(k,points,n_iter=3,wei=None,progress_cb=None):
 					sum[nn]=i*wei[idx]+sum[nn]
 				else:
 					sum[nn]=i*wei[idx]
+		#K.print_performance()
 		rets=[]
 		for i in cnt:
 			rets.append(sum[i]/cnt[i])
@@ -180,11 +181,11 @@ def img2ldl(im,ss=1e5,n_colors=None,debug=False,print_progress=True,back_delauna
 		if(print_progress):progbar("sample colors",idx/n_sample_color)
 		colors.append(np.array(sim.getpixel(xy)))
 	colors=kmeans_with_kdt(n_colors,colors,progress_cb=prog_cb("merge colors"))
-	
+	colors=list(set([tuple(c) for c in colors]))
 	import kdt
 	K=kdt.kdt()
-	K.build([kdt.point(c) for c in colors],stop_num=3)
-	print("color kdt performance",K.avg_calc)
+	K.build([kdt.point(c) for c in colors])
+	#print("color kdt performance",K.avg_calc)
 	sim_arr=np.zeros(sim.size,np.uint32)
 	#_sim_arr=np.asarray(sim).swapaxes(0,1)
 	if(debug):id2c=dict()
@@ -196,7 +197,7 @@ def img2ldl(im,ss=1e5,n_colors=None,debug=False,print_progress=True,back_delauna
 		nn=K.ann1(kdt.point(c))
 		sim_arr[x,y]=nn.id
 		if(debug):id2c[nn.id]=c
-	
+	K.print_performance()
 	pixel_group=DJS_sum()
 	all_edges=set()
 	group_color=dict()

@@ -215,7 +215,42 @@ class wh_iter:
 			return ret
 	def __iter__(self):
 		return self
-
-if(__name__=='__main__'):
-	for x,y in wh_iter(10,10):
-		print(x,y)
+def quick_sort(ls,l=None,r=None,no_recursion=False):
+	if(l is None):
+		l=0
+	if(r is None):
+		r=len(ls)-1
+	_l=l
+	_r=r
+	ref=ls[l]
+	
+	def sw(a,b):
+		tmp=ls[a]
+		ls[a]=ls[b]
+		ls[b]=tmp
+	while(l!=r):
+		while(l!=r and ls[r]>=ref):
+			r-=1
+		sw(l,r)
+		while(l!=r and ls[l]<=ref):
+			l+=1
+		sw(l,r)
+	if(not no_recursion):
+		lr=l-1
+		rl=l+1
+		if(_l<lr):
+			quick_sort(ls,_l,lr)
+		if(rl<_r):
+			quick_sort(ls,rl,_r)
+	return l
+def quick_rank(ls,rank):
+	l=0
+	r=len(ls)-1
+	while(True):
+		mid=quick_sort(ls,l,r,no_recursion=True)
+		if(mid==rank):
+			return ls[mid]
+		if(rank<=mid):
+			r=mid
+		else:
+			l=mid+1
