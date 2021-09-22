@@ -143,9 +143,8 @@ class kdt:
 		ls=[p.arr[axis] for p in points]
 		rank=(len(ls)-1)//2
 		value=quick_rank(ls,rank)
-		while(value>=max(ls)):
-			rank=rank//2
-			value=quick_rank(ls,rank)
+		if(value>=max(ls)):
+			value=sum(ls)/len(ls)
 		self.axis[u]=axis
 		self.value[u]=value
 		lpoints=list()
