@@ -107,6 +107,7 @@ def kmeans_with_kdt(k,points,n_iter=3,wei=None,progress_cb=None):
 			rets.append(sum[i]/cnt[i])
 		if(len(rets)<k):
 			rets.extend(random.sample(points,k-len(rets)))
+	K.print_performance()
 	return rets
 def img2ldl(im,ss=1e5,n_colors=None,debug=False,print_progress=True,back_delaunay=None,force_group=0):
 	import time

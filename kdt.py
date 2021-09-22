@@ -111,10 +111,12 @@ class kdt:
 		self._cnt_call_ann_recursive=0
 		self._cnt_calc_dist=0
 		self._sum_leaf=0
+		self._cnt_recall=0
 		self._sum_leaf_depth=0
 	def print_performance(self):
 		print("call ann",self._cnt_call_ann_recursive/self._cnt_call_ann_top)
 		print("calc dist",self._cnt_calc_dist/self._cnt_call_ann_top)
+		print("recall",self._cnt_recall/self._cnt_call_ann_top)
 	def build(self,points,stop_num=1,depth=0,stop_depth=20):
 		#print(len(points),depth)
 		if(depth==0):
@@ -190,6 +192,7 @@ class kdt:
 			self._cnt_calc_dist+=1
 			retd=ret.dist(p)
 			if(min(retd,cut_dist)<abs(p.arr[axis]-value)):
+				self._cnt_recall+=1
 				ret1=self.ann1(p,self.right_child[u],cut_dist=min(retd,cut_dist))
 				self._cnt_calc_dist+=1
 				ret1d=ret1.dist(p)
@@ -207,6 +210,7 @@ class kdt:
 			self._cnt_calc_dist+=1
 			retd=ret.dist(p)
 			if(min(retd,cut_dist)<abs(p.arr[axis]-value)):
+				self._cnt_recall+=1
 				ret1=self.ann1(p,self.left_child[u],cut_dist=min(retd,cut_dist))
 				self._cnt_calc_dist+=1
 				ret1d=ret1.dist(p)
@@ -351,8 +355,9 @@ class _kdt:
 if(__name__=='__main__'):
 	import random
 	def rand_nd(n):
-		return tuple([random.random() for i in range(n)])
-	nd=10
+		#return tuple([random.random() for i in range(n)])
+		return tuple([random.choice([1,2,3]) for i in range(n)])
+	nd=5
 	num=1024
 	points=[point(rand_nd(nd)) for i in range(num)]
 	def find_nearest_basic():
