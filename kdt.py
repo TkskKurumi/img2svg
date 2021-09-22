@@ -151,7 +151,7 @@ class kdt:
 				lpoints.append(p)
 			else:
 				rpoints.append(p)
-		if((not lpoints) or (not rpoins))
+		if((not lpoints) or (not rpoints)):
 			self.axis[u]=None
 			self.value[u]=None
 			self.node_points[u]=points
