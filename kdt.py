@@ -123,7 +123,7 @@ class kdt:
 			
 			self.initiate_statics()
 			points=list(set(points))
-			print('\n'.join(sorted([str(tuple(i.arr)) for i in points])),len(points))
+			#print('\n'.join(sorted([str(tuple(i.arr)) for i in points])),len(points))
 			for idx,i in enumerate(points):
 				if(not isinstance(i,point)):
 					points[idx]=point(i)
