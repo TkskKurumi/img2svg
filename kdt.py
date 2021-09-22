@@ -141,7 +141,11 @@ class kdt:
 			vars.append((var,i))
 		_,axis=max(vars)
 		ls=[p.arr[axis] for p in points]
-		value=quick_rank(ls,(len(ls)-1)//2)
+		rank=(len(ls)-1)//2
+		value=quick_rank(ls,rank)
+		while(value>=max(ls)):
+			rank=rank//2
+			value=quick_rank(ls,rank)
 		self.axis[u]=axis
 		self.value[u]=value
 		lpoints=list()
@@ -151,11 +155,7 @@ class kdt:
 				lpoints.append(p)
 			else:
 				rpoints.append(p)
-		if((not lpoints) or (not rpoints)):
-			self.axis[u]=None
-			self.value[u]=None
-			self.node_points[u]=points
-			return u
+		
 		self.left_child[u]=self.build(lpoints,stop_num=stop_num,depth=depth+1,stop_depth=stop_depth)
 		self.right_child[u]=self.build(rpoints,stop_num=stop_num,depth=depth+1,stop_depth=stop_depth)
 		return u
