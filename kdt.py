@@ -151,8 +151,11 @@ class kdt:
 				lpoints.append(p)
 			else:
 				rpoints.append(p)
-		assert lpoints,"%s\n%s,%s"%(points,ls,value)
-		assert rpoints,"%s\n%s,%s"%(points,ls,value)
+		if((not lpoints) or (not rpoins))
+			self.axis[u]=None
+			self.value[u]=None
+			self.node_points[u]=points
+			return u
 		self.left_child[u]=self.build(lpoints,stop_num=stop_num,depth=depth+1,stop_depth=stop_depth)
 		self.right_child[u]=self.build(rpoints,stop_num=stop_num,depth=depth+1,stop_depth=stop_depth)
 		return u
