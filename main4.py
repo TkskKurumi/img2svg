@@ -218,16 +218,21 @@ def img2ldl(im,ss=1e5,n_colors=None,debug=False,print_progress=True,back_delauna
 				pixel_group.join((x,y),(x1,y1))
 				#pixel_group.find((x,y))
 				#pixel_group.find((x1,y1))
+	if(force_group):
+		alone_points=set()
+		for xy in xys:
+			if(print_progress):progbar("find alone points",calc_xy_prog(*xy,sw,sh))
+			alone_points.add(xy)
+		for idx,xy in enumerate(alone_points):
+			if(print_progress):progbar("join alone points",idx/len(alone_points))
+			for dx,dy in [(0,1),(1,0)]:
+				x1,y1=x+dx,y+dy
+				if((x1,y1)in alone_points):
+					pixel_group.join((x,y),(x1,y1))
 	for xy in xys1:
 		if(print_progress):progbar("detect edge",calc_xy_prog(*xy,sw-1,sh-1))
 		x,y=xy
 		
-		for dx,dy in [(0,1),(1,0),(1,1),(-1,1)]:
-			x1,y1=x+dx,y+dy
-			if(x1<0):
-				continue
-			if(pixel_group.finds((x1,y1))<force_group or pixel_group.finds(xy)<force_group):
-				pixel_group.join((x,y),(x1,y1))
 			#d,x1,y1=closest
 			#pixel_group.join((x,y),(x1,y1))
 		for dx,dy in [(0,1),(1,0)]:
