@@ -222,7 +222,8 @@ def img2ldl(im,ss=1e5,n_colors=None,debug=False,print_progress=True,back_delauna
 		alone_points=set()
 		for xy in xys:
 			if(print_progress):progbar("find alone points",calc_xy_prog(*xy,sw,sh))
-			alone_points.add(xy)
+			if(pixel_group.finds(xy)<force_group):
+				alone_points.add(xy)
 		for idx,xy in enumerate(alone_points):
 			if(print_progress):progbar("join alone points",idx/len(alone_points))
 			for dx,dy in [(0,1),(1,0)]:
