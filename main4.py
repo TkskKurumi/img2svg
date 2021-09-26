@@ -223,12 +223,10 @@ def img2ldl(im,ss=1e5,n_colors=None,debug=False,print_progress=True,back_delauna
 		x,y=xy
 		
 		for dx,dy in [(0,1),(1,0),(1,1),(-1,1)]:
-			if(pixel_group.finds(xy)>=force_group):
-				break
 			x1,y1=x+dx,y+dy
 			if(x1<0):
 				continue
-			if(pixel_group.finds((x1,y1))<force_group):
+			if(pixel_group.finds((x1,y1))<force_group or pixel_group.finds(xy)<force_group):
 				pixel_group.join((x,y),(x1,y1))
 			#d,x1,y1=closest
 			#pixel_group.join((x,y),(x1,y1))
