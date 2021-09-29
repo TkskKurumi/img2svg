@@ -601,7 +601,9 @@ if(__name__=='__main__'):
 	n_colors=args.get("n_color",None)
 	#n_colors=int(n_colors)
 	print("ss=%s,n_colors=%s"%(ss,n_colors))
-	realss,loops,dots,lines,rate=img2ldl(im,n_colors=n_colors,ss=ss,debug=False)
+	if(back_delaunay is not None):
+		back_delaunay=int(back_delaunay)
+	realss,loops,dots,lines,rate=img2ldl(im,n_colors=n_colors,ss=ss,debug=False,back_delaunay=back_delaunay)
 	if(args.get("no_lines",False) or args.get("nl",False)):
 		lines=[]
 	if(args.get("no_dots",False) or args.get("nd",False)):
@@ -618,9 +620,8 @@ if(__name__=='__main__'):
 	scale=min(ww/w,hh/h)
 	loop_stroke=not (args.get("ns",False) or args.get("no_stroke",False))
 	back_delaunay=args.get("bd") or args.get("back_delaunay")
-	if(back_delaunay is not None):
-		back_delaunay=int(back_delaunay)
-	s=ldl2svg(loops,dots,lines,scale=scale,loop_stroke=loop_stroke,loop_stroke_width=1.618/rate,back_delaunay=back_delaunay)
+	
+	s=ldl2svg(loops,dots,lines,scale=scale,loop_stroke=loop_stroke,loop_stroke_width=1.618/rate)
 	if(quality=='dont_change'):
 		ss=dont_change_ss
 	else:
