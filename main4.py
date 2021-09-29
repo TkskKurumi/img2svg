@@ -617,7 +617,10 @@ if(__name__=='__main__'):
 	w,h=im.size
 	scale=min(ww/w,hh/h)
 	loop_stroke=not (args.get("ns",False) or args.get("no_stroke",False))
-	s=ldl2svg(loops,dots,lines,scale=scale,loop_stroke=loop_stroke,loop_stroke_width=1.618/rate)
+	back_delaunay=args.get("bd") or args.get("back_delaunay")
+	if(back_delaunay is not None):
+		back_delaunay=int(back_delaunay)
+	s=ldl2svg(loops,dots,lines,scale=scale,loop_stroke=loop_stroke,loop_stroke_width=1.618/rate,back_delaunay=back_delaunay)
 	if(quality=='dont_change'):
 		ss=dont_change_ss
 	else:
